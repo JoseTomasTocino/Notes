@@ -11,7 +11,10 @@ deal with dependencies and have **plenty** of HD space, just use:
 
     sudo apt-get install texlive-full
 
-Also, you need [Pygments](http://pygments.org/) for the code highlighting.
+Also, you need [Pygments](http://pygments.org/) for the code highlighting. It can be easily installed using:
+
+    sudo apt-get install python-pygments
+
 Once you have all the dependencies, just run
 
     make
