@@ -1,0 +1,216 @@
+%%
+%% This is file `schemata.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% schemata.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2013 by Charles P. Schaum <charles dot schaum at att dot net>
+%% 
+%% This file may be distributed and/or modified under the conditions of
+%% the LaTeX Project Public License, either version 1.2 of this license
+%% or (at your option) any later version.  The latest version of this
+%% license is in:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.2 or later is part of all distributions of LaTeX version
+%% 1999/12/01 or later.
+%% 
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+\else
+\NeedsTeXFormat{LaTeX2e}[2005/12/01]
+\ProvidesPackage{schemata}
+    [2013/03/10 v0.6 generic package to aid construction of topical categories]
+\fi
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+\def\DoBraces{\let\schemaLD\lbrace \let\schemaRD\rbrace}\DoBraces%
+\DoBraces%
+\else
+\DeclareOption{braces}{\let\schemaLD\lbrace \let\schemaRD\rbrace}
+\DeclareOption{brackets}{\let\schemaLD\lbrack \let\schemaRD\rbrack}
+\DeclareOption{parens}{\let\schemaLD( \let\schemaRD)}
+\ExecuteOptions{braces}
+\ProcessOptions\relax
+\fi
+\newbox\rhs%
+\newbox\lhs%
+\newdimen\rheight%
+\newdimen\lheight%
+\newif\ifschemaLC%
+\newif\ifschemaSwitch%
+\def\DoBraces{\let\schemaLD\lbrace \let\schemaRD\rbrace}\DoBraces%
+\def\DoBrackets{\let\schemaLD\lbrack \let\schemaRD\rbrack}%
+\def\DoParens{\let\schemaLD( \let\schemaRD)}%
+\def\LCschema{\schemaLCtrue}%
+\def\UCschema{\schemaLCfalse}%
+\def\SwitchSB{\schemaSwitchtrue}%
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+{\catcode`@=11
+\gdef\schemabox{\futurelet\testchar\schemab@x}
+\gdef\schemab@x{\ifx[\testchar \let\next\@schemabox%
+  \else \let\next\@schemab@x \fi \next}
+\gdef\@schemab@x#1{\@schemabox[0pt]{#1}}
+\gdef\@schemabox[#1]#2{%
+  \ifschemaLC\def\Adj{}%
+    \ifschemaSwitch\def\Adj{\strut}\fi
+  \else
+    \def\Adj{\strut}%
+    \ifschemaSwitch\def\Adj{}\fi
+  \fi
+  \schemaSwitchfalse%
+  \ifdim#1<1pt
+    \def\\{\egroup\hbox\bgroup\ignorespaces }%
+    \vbox{\hbox\bgroup\Adj\ignorespaces #2\egroup}%
+  \else
+    \def\\{\hfil\egroup\hbox to #1\bgroup\ignorespaces }%
+    \vbox{\hbox to #1\bgroup\Adj\ignorespaces #2\hfil\egroup}%
+  \fi
+}}\else
+\newcommand{\schemabox}[2][0pt]{%
+  \ifschemaLC\def\Adj{}%
+    \ifschemaSwitch\def\Adj{\strut}\fi
+  \else
+    \def\Adj{\strut}%
+    \ifschemaSwitch\def\Adj{}\fi
+  \fi
+  \schemaSwitchfalse%
+  \ifdim#1<1pt
+    \def\\{\egroup\hbox\bgroup\ignorespaces }%
+    \vbox{\hbox\bgroup\Adj\ignorespaces #2\egroup}%
+  \else
+    \def\\{\hfil\egroup\hbox to #1\bgroup\ignorespaces }%
+    \vbox{\hbox to #1\bgroup\Adj\ignorespaces #2\hfil\egroup}%
+  \fi
+}\fi
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+{\catcode`@=11
+\gdef\schema{\futurelet\testchar\schem@}
+\gdef\schem@{\ifx[\testchar \let\next\@schema%
+  \else \let\next\@schem@ \fi \next}
+\gdef\@schem@#1#2{\@schema[open]{#1}{#2}}
+\gdef\@schema[#1]#2#3{%
+  \def\Option{#1}\def\Open{open}%
+  \ifx\Option\Open
+    \setbox\rhs=\vbox{#3}%
+    \rheight=\ht\rhs%
+    \advance\rheight\dp\rhs%
+    \advance\rheight by 1.44265ex%
+    \hbox{$\vcenter{#2}\basiclbrace{\rheight}\vcenter{#3}$}%
+  \else
+    \setbox\lhs=\vbox{#2}%
+    \lheight=\ht\lhs%
+    \advance\lheight\dp\lhs%
+    \advance\lheight by 1.44265ex%
+    \hbox{$\vcenter{#2}\kern-0.2em\basicrbrace{\lheight}\vcenter{#3}$}%
+  \fi
+}}\else
+\newcommand{\schema}[3][open]{%
+  \def\Option{#1}\def\Open{open}%
+  \ifx\Option\Open
+    \setbox\rhs=\vbox{#3}%
+    \rheight=\ht\rhs%
+    \advance\rheight\dp\rhs%
+    \advance\rheight by 1.44265ex%
+    \hbox{$\vcenter{#2}\basiclbrace{\rheight}\vcenter{#3}$}%
+  \else
+    \setbox\lhs=\vbox{#2}%
+    \lheight=\ht\lhs%
+    \advance\lheight\dp\lhs%
+    \advance\lheight by 1.44265ex%
+    \hbox{$\vcenter{#2}\kern-0.2em\basicrbrace{\lheight}\vcenter{#3}$}%
+  \fi
+}\fi
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+{\catcode`@=11
+\gdef\Schema{\futurelet\testchar\Schem@}
+\gdef\Schem@{\ifx[\testchar \let\next\@Schema \else \let\next\@Schem@ \fi \next}
+\gdef\@Schem@#1#2#3#4{\@Schema[open]{#1}{#2}{#3}{#4}}
+\gdef\@Schema[#1]#2#3#4#5{%
+  \def\Option{#1}\def\Open{open}%
+  \ifx\Option\Open
+    \dimen0=#2%
+    \hbox{$\vcenter{\vskip1.44265\dimen0#4}\complexlbrace{#2}{#3}\vcenter{#5}$}%
+  \else
+    \dimen0=#2%
+    \hbox{$\vcenter{\vskip1.44265\dimen0#4}\kern-0.2em%
+      \complexrbrace{#2}{#3}\vcenter{#5}$}%
+  \fi
+}}\else
+\newcommand{\Schema}[5][open]{%
+  \def\Option{#1}\def\Open{open}%
+  \ifx\Option\Open
+    \dimen0=#2%
+    \hbox{$\vcenter{\vskip1.44265\dimen0#4}\complexlbrace{#2}{#3}\vcenter{#5}$}%
+  \else
+    \dimen0=#2%
+    \hbox{$\vcenter{\vskip1.44265\dimen0#4}\kern-0.2em%
+      \complexrbrace{#2}{#3}\vcenter{#5}$}%
+  \fi
+}\fi
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+  \def\basiclbrace#1{%
+    \ifmmode\left.\vcenter{\vbox to #1{\vfil}}\right\schemaLD\fi}
+\else
+  \newcommand{\basiclbrace}[1]{%
+    \ifmmode\left.\vcenter{\vbox to #1{\vfil}}\right\schemaLD\fi}
+\fi
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+  \def\basicrbrace#1{%
+    \ifmmode\left\schemaRD\vcenter{\vbox to #1{\vfil}}\right.\fi}
+\else
+  \newcommand{\basicrbrace}[1]{%
+    \ifmmode\left\schemaRD\vcenter{\vbox to #1{\vfil}}\right.\fi}
+\fi
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+\def\complexlbrace#1#2{%
+  \dimen0=#1%
+  \dimen2=#2%
+  \ifdim\dimen0<0pt
+    \ifmmode\vcenter{\hbox{$\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaLD%
+      \atop\vbox to -1.44265\dimen0{\vfil}$}}\fi
+  \else
+    \ifmmode\vcenter{\hbox{$\vbox to 1.44265\dimen0{\vfil}%
+      \atop\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaLD$}}\fi
+  \fi
+}\else
+\newcommand{\complexlbrace}[2]{%
+  \dimen0=#1%
+  \dimen2=#2%
+  \ifdim\dimen0<0pt
+    \ifmmode\vcenter{\hbox{$\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaLD%
+      \atop\vbox to -1.44265\dimen0{\vfil}$}}\fi
+  \else
+    \ifmmode\vcenter{\hbox{$\vbox to 1.44265\dimen0{\vfil}%
+      \atop\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaLD$}}\fi
+  \fi
+}\fi
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+\def\complexrbrace#1#2{%
+  \dimen0=#1%
+  \dimen2=#2%
+  \ifdim\dimen0<0pt
+    \ifmmode\vcenter{\hbox{$\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaRD%
+      \atop\vbox to -1.44265\dimen0{\vfil}$}}\fi
+  \else
+    \ifmmode\vcenter{\hbox{$\vbox to 1.44265\dimen0{\vfil}%
+      \atop\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaRD$}}\fi
+  \fi
+}\else
+\newcommand{\complexrbrace}[2]{%
+  \dimen0=#1%
+  \dimen2=#2%
+  \ifdim\dimen0<0pt
+    \ifmmode\vcenter{\hbox{$\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaRD%
+      \atop\vbox to -1.44265\dimen0{\vfil}$}}\fi
+  \else
+    \ifmmode\vcenter{\hbox{$\vbox to 1.44265\dimen0{\vfil}%
+      \atop\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaRD$}}\fi
+  \fi
+}\fi
+\endinput
+%%
+%% End of file `schemata.sty'.

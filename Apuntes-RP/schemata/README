@@ -1,0 +1,59 @@
+The schemata package
+Charles P. Schaum
+charles dot schaum at att dot net
+v0.6 from 2013/03/10
+
+Abstract
+
+The schemata package facilitates the creation of topical schemata, outlines that use braces (or facsimiles thereof) to illustrate the breakdown of concepts and categories in Scholastic thought from late medieval and early modern periods. This packages functions with both plain TeX and LaTeX.
+
+Files
+
+README		This file 	(normally in TEXMFDIST/doc/generic/schemata)
+schemata.pdf	Documentation	(normally in TEXMFDIST/doc/generic/schemata)
+
+Makefile	Automates building with GNU make 3.81
+schemata.ins	Installer
+schemata.dtx	LaTeX file containing both code and documentation. 
+
+Installation
+
+Unpack schemata.zip.
+
+Generate the file schemata.sty, e.g.:
+	$ pdflatex schemata.ins
+
+Usually this will go in TEXMFDIST/tex/generic/schemata.
+
+Generate the documentation:
+	$ pdflatex schemata.dtx
+	$ makeindex -s gglo.ist -o schemata.gls schemata.glo
+	$ makeindex -s gind.ist -o schemata.ind schemata.idx
+	$ pdflatex schemata.dtx
+	$ pdflatex schemata.dtx
+
+I used GNU make to automate the process:
+	$ make
+
+Create the directories listed above. For TeX Live, TEXMFDIST is often /usr/local/texmf/<year>/texmf-dist on Posix-compliant systems. Manual installation calls rather for /usr/local/texlive/texmf-local or ~/texmf.
+
+MacTeX and MikTeX differ. Please refer to your distribution manual.
+
+Copy the distribution files to their appropriate destinations.
+
+Run mktexlsr with the appropriate level of permissions.
+
+Source distribution notes:
+
+Testing notes:
+
+This package is designed purposefully to be very basic.
+
+For testing purposes, the make file permits one to change the typesetting engine on the command line. The default is to build the package with pdflatex. See Makefile for more details.
+
+License
+
+This material is subject to the LaTeX Project Public License. See http://www.ctan.org/tex-archive/help/Catalogue/licenses.lppl.html for the details of that license.
+
+Happy TeXing!
+

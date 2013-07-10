@@ -1,0 +1,1476 @@
+\documentclass[11pt]{scrartcl}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{drawstack}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{multirow}
+\usepackage{minted}
+\usepackage{soul}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage[spanish]{babel}
+\usepackage{color}
+\usepackage{framed}
+\definecolor{prueba}{rgb}{.1,.1,.4}
+\hypersetup{colorlinks=true, linkcolor=prueba,citecolor=prueba, filecolor=prueba, menucolor=prueba, urlcolor=prueba}
+\usepackage{float}
+
+\usepackage{fancyvrb}
+%\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage[top=2.1cm, bottom=2.1cm, left=2.1cm, right=2.1cm]{geometry}
+
+
+\title{\Huge{Apuntes}\\[0.2cm]\LARGE{Procesadores de Lenguajes I}}
+\author{José Tomás Tocino García}
+\date{Junio de 2013}
+
+\newminted{bash}{}
+\newminted{gas}{}
+
+\newenvironment{ejemplo}%
+{\VerbatimEnvironment\begin{Verbatim}[frame=single]}%
+{\end{Verbatim}}%
+
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Estructura de un proceso}
+
+\subsection{Datos}
+
+En un programa existen dos tipos de datos. Los \textbf{datos estáticos} agrupan
+las variables globales y las variables estáticas de las funciones. El tamaño de
+los datos estáticos se debe conocer en tiempo de compilación.
+
+Los \textbf{datos dinámicos} son el segundo tipo. Agrupan a las variables
+\textbf{locales} y a las variables \textbf{dinámicas}. 
+
+Las variables locales (entre las que también se encuentran los argumentos de una
+función) tienen un ciclo de vida ligado al marco de ejecución de la función, por
+lo que cuando concluyen las instrucciones, el valor de las variables se
+pierde. Las variables locales se alojan en la \texttt{stack}.
+
+Las variables dinámicas se almacenan en el montículo o \texttt{heap}, y su
+tiempo de vida no está contenido en el del marco de activación, sino que deben
+ser manualmente gestionadas mediante elementos como \texttt{new} y
+\texttt{free}.
+
+\subsection{Memoria}
+
+Cuando se lanza un programa, el sistema operativo le asigna un espacio de
+memoria, que se organiza de la siguiente manera (de mayor a menor dirección de
+memoria)
+
+\medskip
+
+\begin{center}
+  \begin{drawstackbare}
+    \cell{Código} \cellcom{HIGH}
+    \cell{Datos estáticos}
+    \cell{Pila de control (stack)}
+    \cell{$\Downarrow$}
+    \padding{1}{...}
+    \cell{$\Uparrow$}
+    \cell{Heap}
+    \cellcom{LOW}
+  \end{drawstackbare}
+\end{center}
+
+En la pila de control se almacenan los \textbf{marcos de activación}, que
+encapsulan la información necesaria para gestionar la llamada a una
+subrutina. Los marcos suelen tener esta estructura:
+
+\begin{center}
+  \begin{drawstackbare}
+    \cell{Último parámetro}
+    \padding{1}{...}
+    \cell{Primer parámetro} \cellcom{8(\%ebp)}
+    \cell{Dirección de retorno}
+    \cell{Antiguo EBP} \ebp
+    \cell{Variable local 1} \cellcom{-4(\%ebp)}
+    \cell{Variable local 2} \cellcom{-8(\%ebp)}
+    \cell{Variable local 3} \cellcom{-12(\%ebp)} \esp
+    \cell{Datos temporales}
+  \end{drawstackbare}
+\end{center}
+
+Para gestionar la memoria en general y la pila en particular, el sistema cuenta
+con dos registros que mantienen direcciones de memoria y que se actualizan
+cuando se llevan a cabo llamadas a subrutinas:
+
+\begin{itemize}
+\item El registro \textbf{ESP} (Extended Stack Pointer) apunta al \textbf{tope
+    de la pila}. Dado que la pila crece hacia direcciones de memoria más bajas,
+  el ESP tendrá un menor valor cuanto más llena esté la pila, y viceversa.
+\item El registro \textbf{EBP} (Extended Base Pointer) apunta a la \textbf{base
+    de la pila}, por lo que sirve como punto de referencia para el acceso a los
+  parámetros y a las variables locales de la función.
+\end{itemize}
+
+Cuando un procedimiento necesita guardar información en la pila, se hace una
+operación \texttt{push} y se decrementa el registro \texttt{ESP}. Dado que ambos
+registros apuntan hacia direcciones \textbf{ocupadas}, el valor de ESP será la
+posición del último elemento que se ha introducido en la pila.
+
+De igual modo, el ESP se recoloca al inicio de cada función de forma que se
+guarde espacio para las variables locales bajo el \texttt{EBP}, es por ello que
+la primera variable local se guardará en \texttt{-4(\%ebp)}, la siguiente en
+\texttt{-8(\%ebp)} y así sucesivamente.
+
+En el siguiente ejemplo, en ambos casos se imprime lo mismo, ya que el registro
+\texttt{ESP} apunta al tope de la pila, que es la última variable local:
+
+\begin{gascode}
+    subl    $4, %esp        # Guardamos espacio para una variable (4 bytes)
+    movl    $77, -4(%ebp)   # Metemos el valor 77
+    
+    pushl   -4(%ebp)
+    pushl   $.LC1
+    call    printf          # Se imprime 77
+    addl    $8, %esp
+    
+    pushl   (%esp)
+    pushl   $.LC1
+    call    printf          # De nuevo imprime 77
+    addl    $8, %esp 
+\end{gascode}
+
+
+\section{Ensamblador}
+
+\subsection{Estructura general}
+
+Un fichero de ensamblador se divide en distintas \textbf{secciones}, que en
+general se asocian a los diferentes segmentos del espacio de memoria del
+programa.
+
+La directiva que da inicio al fichero de ensamblador es:
+
+\begin{gascode}
+    .file   "main.c"  
+\end{gascode}
+
+\subsection{Registros de memoria}
+
+El procesador cuenta con una serie de registros de memoria de acceso muy rápido
+y poca capacidad. Estos registros son de 32bits = 8 bytes. En la arquitectura
+Intel se considera que ocupan una doble palabra (\texttt{doubleword}). Es
+posible direccionar los últimos 16 bits de cada registro, así como los dos
+bloques de 8 bits que dividen esa parte.
+
+% \begin{tabular}{|l|l|l|l|} \hline
+
+% - & - & AH & AL & \\ \hline
+% \multicolumn{2}{|c|}{-} & \multicolumn{2}{|c|}{AX} \\ \hline
+
+
+
+% % \multicolumn{3}{|c|}{Schedulers} \\ \hline
+% % \multirow{3}{*}{Immediate} & RR & Round Robin \\
+% % & EF & Earliest First \\
+% % & LL & Lightest Loaded \\ \hline
+% % \multirow{4}{*}{Batch} & MM & Min-Min \\ 
+% % & MX & Max-Min \\
+% % & DL & Dynamic Level \\ 
+% % & RC & Relative Cost \\ \hline
+% % \multirow{4}{*}{Evolutionary} & PN & This paper \\
+% % & ZO & Genetic Algorithm\\
+% % & TA & Tabu search~\cite{GLOV1986j}\\
+% % & SA & Simlulated Annealing \\ \hline
+% \end{tabular}
+
+Los más habituales son:
+
+\begin{description}
+\item[EAX] \textit{Accumulator register}, usado en operaciones aritméticas.
+\item[EBX] \textit{Base register}, sirve de índice para direccionamientos.
+\item[ECX] \textit{Counter register}, usado en operaciones de bucles.
+\item[EDX] \textit{Data register}, usado en operaciones de datos (como cuando se
+  necesita una doble palabra).
+\item[EBP] \textit{Base pointer}, apunta a la base de la pila del marco actual.
+\item[ESP] \textit{Stack pointer}, apunta al tope de la pila del marco actual.
+\end{description}
+
+\subsection{Segmento de datos (\texttt{.data})}
+El segmento de datos es una porción de la memoria asignada a un programa, que
+contiene las \textbf{variables globales} y las \textbf{variables estáticas}
+inicializadas con un valor. El tamaño de este segmento se determina en tiempo de
+compilación, teniendo en cuenta los valores que asigne el programador.
+
+En este ejemplo, ambas variables se almacenarán en el segmento de datos:
+\begin{minted}{cpp}
+// global
+int i = 10;
+
+int fun () {
+  // static
+  static int j = 10;  
+}
+\end{minted}
+
+En ensamblador, el segmento de datos se indica mediante la directiva
+\texttt{.data}, tras la cual vendrán cada una de las variables señaladas con una
+\textbf{etiqueta}, su \textbf{tipo} y su \textbf{valor}.
+
+\begin{gascode}
+    .data
+x:
+    .long  4
+y:
+    .byte 10  
+s:
+    .string "pepito\n"
+\end{gascode}
+
+\subsubsection{Datos no inicializados}
+
+Los datos \textbf{globales no inicializados} se tratan de forma distinta a los
+previamente comentados. Dado que no se les da valor en su declaración, son
+automáticamente \textbf{inicializados a cero} por el compilador. En ensamblador,
+las variables no inicializadas se colocan en una sección del segmento de datos
+denominada \texttt{.bss}, aunque los compiladores evitan usar la sección .bss y
+usan la directiva \texttt{.comm}, que recibe el nombre de la variable, el tamaño
+y opcionalmente la alineación. Una declaración global como:
+
+\begin{minted}{c}
+int x;  
+\end{minted}
+
+produciría el siguiente código:
+
+\begin{gascode}
+    .comm   x,4,4  
+\end{gascode}
+
+Si se tratara de un array de 2 elementos, el código generado sería:
+
+\begin{gascode}
+    .comm   x,8,4  
+\end{gascode}
+
+\subsection{Segmento de instrucciones (\texttt{.text})}
+
+El segmento de instrucciones, que viene indicado por la directiva
+\texttt{.text}, incluye las instrucciones de las diferentes subrutinas del
+programa así como de la función principal. La rutina principal suele indicarse
+con la etiqueta \texttt{\_start} y llamarse \texttt{main}. Así, el programa más
+pequeño que puede compilarse es el siguiente (generado con \texttt{gcc}):
+
+\begin{gascode}
+    .file   "main.c"
+
+    .text
+    .globl  main
+    .type   main, @function
+main:
+    ret
+    .size   main, .-main
+\end{gascode}
+
+\subsection{Funciones}
+
+A la hora de trabajar con funciones, hay que prestar atención a las
+instrucciones de la rutina \textit{``que llama''} y a las instrucciones de la
+rutina \textit{``llamada''}. 
+
+\subsubsection{Código de llamada a función}
+
+Para llamar a una función es necesario \textbf{meter en la pila} los argumentos
+de la función, mediante sucesivas llamadas a la instrucción \texttt{pushl}. Una
+vez introducidos todos los parámetros, se usará la instrucción \texttt{call}
+para realizar la llamada.
+
+Algo importante es que los argumentos se introducen en la pila \textbf{en orden
+  inverso}, para que puedan luego sacarse en el orden correcto.
+
+\begin{gascode}
+# Equivalente a fun(4,2)  
+    pushl   $2
+    pushl   $4
+    call    fun
+\end{gascode}
+
+\subsubsection{Código de declaración de función}
+
+En ensamblador, las funciones son objetos globales de tipo \texttt{@function}, y
+tienen una etiqueta con su nombre, lo cual se define de la siguiente forma (para
+una supuesta función llamada \textit{fun}):
+
+\begin{gascode}
+    .globl  fun
+    .type   fun, @function
+fun:  
+\end{gascode}
+
+Tras la etiqueta, vienen las instrucciones de la función, que comienzan con el
+\textbf{prólogo}. Éste suele ser siempre el mismo, y lleva a cabo las siguientes
+operaciones:
+\begin{itemize}
+\item Mete el antiguo registro EBP en la pila, de forma que pueda recuperarse
+  después. Esto, a su vez, actualiza el puntero ESP
+\item Asigna al EBP (al puntero base) el valor de ESP (el tope de la pila), de
+  forma que el nuevo marco de activación se creará encima del antiguo marco que
+  se encuentra en la pila.
+\item Se desplaza el ESP, dependiendo del número de variables locales.
+\end{itemize}
+
+En código ensamblador, esto se traduce en:
+
+\begin{gascode}
+    pushl   %ebp
+    movl    %esp, %ebp
+    subl    $16, %esp  # Si hubiera 4 variables locales ( 4 * 4 = 16 )
+\end{gascode}
+%$
+
+Posteriormente, irán las \textbf{instrucciones propias} de la función. Dentro de la
+función, es importante tener en cuenta varias cosas:
+\begin{itemize}
+\item Los \textbf{argumentos} están alojados en la pila por encima del EBP y de la
+  dirección de retorno (dos posiciones), por lo que el primer parámetro estará
+  en \texttt{8(\%ebp)}, el segundo en \texttt{12(\%ebp)} y así sucesivamente.
+\item Las \textbf{variables locales} están alojadas por debajo del EBP, esto es,
+  en direcciones de memoria \textbf{menores}, por lo que la primera variable se
+  encontrará en \texttt{-4(\%ebp)}, la segunda estará en \texttt{-8(\%ebp)},
+  etcétera.
+\end{itemize}
+
+\medskip
+
+Por último, el \textbf{epílogo} de las funciones suele ser también muy común, realizando
+lo siguiente:
+
+\begin{itemize}
+\item Si la función debe devolver algún valor, éste debe colocarse en un
+  registro, como en \texttt{EAX}.
+\item Se restaura el valor antiguo del \texttt{ESP}, que se encuentra en
+  \texttt{EBP}, esto es, se hace \texttt{ESP = EBP}.
+\item Se restaura el valor antiguo del \texttt{EBP}, que se encontraba en la
+  pila. Como se ha restaurado el valor del ESP, éste apuntará justo a la
+  posición donde se guardó el antiguo EBP.
+\item Se devuelve el \textbf{control de la ejecución} a la función llamadora,
+  cuya dirección se encuentra justo en el tope de la pila (recordar
+  \textit{estructura del marco de activación}).
+\end{itemize}
+
+En ensamblador, esto se haría de la siguiente manera:
+
+\begin{gascode}
+    movl  %ebp, %esp
+    popl  %ebp
+    ret
+\end{gascode}
+
+La instrucción \texttt{leave} es equivalente a las dos primeras instrucciones,
+por lo que el epílogo también se puede escribir así:
+
+\begin{gascode}
+    leave
+    ret  
+\end{gascode}
+
+Como última línea se suele indicar el tamaño de la función mediante este código: 
+
+\begin{gascode}
+    .size   fun, .-fun
+\end{gascode}
+
+\subsubsection{Código tras la llamada a la función}
+
+Tras la llamada a la función, la función \textit{llamadora} debe restaurar el
+registro \texttt{ESP} a su valor original, el que tenía antes de que se
+incluyesen en la pila los argumentos de la función. Por tanto, se moverá hacia
+arriba el \texttt{ESP} (es decir, se le sumará) $4 \;\times$ el número de
+argumentos de la función. En nuestro ejemplo había dos argumentos, por lo que se
+hará:
+
+\begin{gascode}
+    addl $8, %esp  
+\end{gascode}
+%$
+
+Si la función devolvía algo, el valor de retorno se encontrará en el registro
+\texttt{EAX} para su uso en sucesivas instrucciones.
+
+\subsubsection{Ejemplo completo de función}
+
+Este es un ejemplo completo de definición y llamada a una función, con un
+argumento, en ensamblador.
+
+\inputminted{gas}{codes/ej_funcion.s}
+%$
+
+\begin{framed}
+  \textbf{Importante: }
+  Todas las operaciones, incluso las de asignación, deben devolver el valor en
+  el registro EAX. En el caso de las asignaciones, el valor que se devuelve es
+  aquél que se asigna a la posición de memoria.
+\end{framed}
+
+\subsection{Arrays}
+
+Los vectores o \textit{arrays} tienen un tratamiento especial. A la hora de
+reservar memoria, un array ocupará tantos bytes como los elementos que la
+componen: si tratamos con un array de 3 enteros, ocupará $3 \times 4 = 12$
+bytes.
+
+En \textbf{memoria}, los arrays se colocan de menor a mayor posición de memoria,
+por lo que si tenemos un array local de tres enteros, su direccionamiento será:
+
+\begin{center}
+  \begin{drawstackbare}
+    \cell{Antiguo EBP} \ebp
+    \cell{x[2]} \cellcom{-4(\%ebp)}
+    \cell{x[1]} \cellcom{-8(\%ebp)}
+    \cell{x[0]} \cellcom{-12(\%ebp)}
+  \end{drawstackbare}
+\end{center}
+
+Para direccionar un array en ensamblador, primero ponemos el índice en el
+registro \texttt{EBX}. Para el caso de las variables locales, tomaremos la
+dirección base (en la que se encuentra \texttt{x[0]}), y usaremos esta sintaxis:
+
+\begin{gascode}
+  # Suponiendo que la base sea -12(%ebp)
+  -12(%ebp, %ebx, 4)  
+\end{gascode}
+
+Para el caso de las variables globales, la sintaxis es:
+
+\begin{gascode}
+  # Suponiendo una global 'x'
+  x(, %ebx, 4)  
+\end{gascode}
+
+\subsection{Asignación}
+
+De manera general, la forma habitual de hacer una asignación es colocar el valor
+en un registro y moverlo a una dirección de memoria, que suele estar contenida
+en otro registro. El símil en C sería el siguiente:
+
+\begin{minted}{c}
+int * direccion;   // Suele estar en EDX
+int valor;         // Suele estar en EAX
+
+*direccion = valor;
+\end{minted}
+
+Así, en ensamblador el primer paso sería ejecutar el código que calcula la
+\textbf{dirección de destino}, que se almacenaría en el registro
+\texttt{EAX}. Este valor se metería en la pila, y posteriormente se ejecutaría
+el código encargado de \textbf{calcular el valor a asignar}, que también se
+escribiría en \texttt{EAX} (por ello la dirección se mete en la pila, para
+evitar perder el valor si se sobreescribe EAX). En este punto, se
+\textbf{recupera el valor de la dirección} de destino, copiándolo por ejemplo al
+registro \texttt{EDX}. El último paso es hacer la copia del valor a la dirección
+de memoria cuya posición está escrita en EDX.
+
+En ensamblador:
+
+\begin{gascode}
+   # Generate memory address and store it in EAX
+   # ...
+   
+   # Save the address in the stack for later use
+   pushl %eax
+
+   # Generate value to store, and place it in EAX
+   # ...
+
+   # Restore previously calculated address and store in EDX
+   popl %edx
+   
+   # Make the actual copy
+   movl %eax, (%edx)
+\end{gascode}
+
+\subsubsection{Asignación con operación}
+
+En las operaciones de asignación con operación (que llevan a cabo los operadores
+\texttt{+=}, \texttt{-=}, \texttt{*=} y \texttt{/=}), el funcionamiento es
+similar a la asignación tradicional, con la diferencia de que antes de hacer la
+asignación es necesario calcular el valor previo del destino y realizar la
+operación.
+
+\paragraph{Suma}
+
+En la suma, en lugar de hacer una copia directa del valor a la posición de
+memoria, se hace una suma.
+
+\begin{gascode}
+    # Restore the destination address
+    popl %edx
+
+    # Add the value to the one already in the destination address
+    addl %eax, (%edx)
+    
+    # Make sure the final value is in EAX
+    movl (%edx), %eax  
+\end{gascode}
+
+\paragraph{Resta} 
+
+Es básicamente igual que la suma pero usando la operación de resta.
+
+\begin{gascode}
+    # Restore the destination address
+    popl %edx
+
+    # Subtract the value to the one already in the destination address
+    subl %eax, (%edx)
+    
+    # Make sure the final value is in EAX
+    movl (%edx), %eax  
+\end{gascode}
+
+\paragraph{Producto}
+
+En el caso del producto, el orden es distinto, ya que \texttt{imull} no acepta
+un direccionamiento como segundo parámetro:
+
+\begin{gascode}
+   # Restore the destination address
+   popl %edx
+
+   # Multiply the contents of the destination with EAX
+   imul (%edx), %eax
+
+   # Move the result back to the destination
+   movl %eax, (%edx)  
+\end{gascode}
+
+\paragraph{División}
+
+El caso de la división es algo distinto. La instrucción \textit{idiv} utiliza
+como entrada (para el dividendo) el par \texttt{EDX:EAX} (una quad-word), por lo
+que es necesario utilizar la instrucción \texttt{cdq} (\textit{convert double to
+  quad}) para hacer la expansión.
+
+\begin{gascode}
+   # Restore the destination address
+   popl %ecx
+
+   # Move the divisor to EBX
+   movl %eax, %ebx
+
+   # Move the dividend to EAX
+   movl (%ecx), %eax
+
+   # Convert to quad word
+   cdq
+
+   # To the division
+   idiv %ebx
+
+   # Save the value in the original position
+   movl %eax, (%ecx)
+  
+\end{gascode}
+
+\subsection{Operaciones aritméticas}
+
+Los operadores aritméticos funcionan de manera similar a los operadores de
+operación con asignación, generando el código ensamblador de cada operando y
+realizando la operación final.
+
+\paragraph{Suma}
+
+\begin{gascode}
+    # izq -> generar();
+    pushl %eax
+
+    # derecha -> generar   
+    popl %ebx
+    addl %ebx, %eax
+\end{gascode}
+
+\paragraph{Resta}
+
+En este caso hay que tener en cuenta el orden de los factores, de forma que en
+\texttt{EAX} esté el factor de la izquierda y en \texttt{EBX} el factor de la
+derecha.
+
+\begin{gascode}
+    # izq -> generar();
+    # ...
+    pushl %eax
+
+    # derecha -> generar   
+    # ...
+    movl %eax, %ebx
+    popl %eax
+    subl %ebx, %eax
+\end{gascode}
+
+\paragraph{Producto}
+
+El producto es igual que la suma
+
+\begin{gascode}
+    # izq->generar()
+    pushl %eax
+
+    # der->generar()
+    popl %ebx
+    imul %ebx, %eax
+\end{gascode}
+
+
+\paragraph{División}
+
+En la división ocurre lo mismo que en la resta, hay que tener en cuenta el orden
+de los factores. Y hay que convertir de \textit{double word} a \textit{quad
+  word} con \texttt{CDQ}.
+
+\begin{gascode}
+    # izq->generar()
+    pushl %eax  
+
+    # der->generar()
+    movl %eax, %ebx
+    popl %eax
+    cdq
+    idivl %ebx
+\end{gascode}
+
+\subsection{Operadores lógicos}
+
+Los operadores lógicos funcionan de manera muy similar a los operadores
+aritméticos:
+
+\paragraph{AND}
+
+La operación \texttt{AND} se lleva a cabo mediante la instrucción \texttt{ANDL}:
+
+\begin{gascode}
+  # izq->generar()
+  pushl %eax
+
+  # der->generar()
+  popl %ebx
+  andl %ebx, %eax
+\end{gascode}
+
+\paragraph{OR}
+
+La operación \texttt{OR} se lleva a cabo mediante la instrucción \texttt{ORL}:
+
+\begin{gascode}
+  # izq->generar()
+  pushl %eax
+
+  # der->generar()
+  popl %ebx
+  orl %ebx, %eax
+\end{gascode}
+
+\paragraph{Negación}
+
+La negación lógica se consigue usando la instrucción \texttt{NOTL}:
+
+\begin{gascode}
+  # izq->generar()
+  notl %eax
+\end{gascode}
+
+\subsection{Operadores relacionales}
+
+Los operadores relacionales funcionan todos basándose en la instrucción
+\texttt{CMP}, que activa ciertas banderas en el registro \texttt{EFLAGS}. Esas
+banderas son revisadas por las diferentes \textbf{instrucciones de salto}, que
+realizarán un salto condicional según cada caso.
+
+Hay que recordar que al usar estos operadores, el objetivo final es colocar un 0
+o 1 en el registro \texttt{EAX}, de forma que el resto de instrucciones conozcan
+el resultado. La forma habitual de usar estos operadores es la siguiente:
+
+\begin{gascode}
+  # izq->generar()
+  pushl %eax
+
+  # der->generar()
+  popl %ebx
+
+  # Guardamos el primer operando en otro registro
+  movl %eax, %ecx
+
+  # Ponemos EAX a 1
+  movl $1, %eax 
+
+  # Hacemos la comparacion
+  cmpl %ecx, %ebx
+
+  # Segun el caso usamos una instruccion de salto u otra
+  jg etSalida
+
+  # Esta rama se alcanza si no se hace el salto
+  movl $0, %eax
+
+  # Fin del operador
+etSalida:
+  
+\end{gascode}
+
+Las instrucciones que se utilizan para cada operador son:
+
+\begin{description}
+\item[Igual] \texttt{je} (equal)
+\item[Distinto] \texttt{jne} (not equal)
+\item[Mayor que] \texttt{jg} (greater)
+\item[Menor que] \texttt{jl} (lower)
+\item[Mayor o igual] \texttt{jge} (greater or equal)
+\item[Menor o igual] \texttt{jle} (lower or equal)
+\end{description}
+
+\subsection{Flotantes}
+
+A la hora de trabajar con flotantes la cosa cambia, porque no se utilizan los
+registros ni las instrucciones habituales, sino que las operaciones se hacen a
+través de la \textbf{FPU} (\textit{floating-point unit}), que cuenta con
+\textbf{sus propios registros} de control, de estado y de datos.
+
+\subsubsection{Registros de datos de la FPU}
+
+La FPU cuenta con \textbf{ocho registros} de 80 bits para almacenar números en
+formato de doble precisión extendida en coma flotante. Cuando \textbf{se carga}
+un flotante o un entero en un registro de la FPU, automáticamente \textbf{se
+  convierte} al formato de doble precisión. Cuando es necesario
+\textbf{almacenar de vuelta en la memoria principal} el contenido de un registro
+de la FPU, el resultado puede dejarse en formato de doble precisión o
+\textbf{convertirse} a un formato de precisión simple, o a entero.
+
+
+\begin{center}
+
+  \begin{drawstackbare}
+    \cell{7}
+    \cell{6}
+    \cell{5} \cellcom{ST(2)}
+    \cell{4} \cellcom{ST(1)}
+    \cell{3} \cellcom{ST(0) (crece hacia abajo)}
+    \cell{2}
+    \cell{1}
+    \cell{0}
+  \end{drawstackbare}
+
+  Pila de registros de datos de la FPU
+\end{center}
+
+\bigskip
+
+Los ocho registros de la FPU funcionan como una pila de registros. Todo
+\textbf{el direccionamiento es relativo} al elemento en el tope de la pila. El
+número de registro que está en el tope se guarda en el campo \texttt{TOP} del
+registro de estado de la FPU. Las operaciones \textbf{de carga decrementan} el
+TOP en 1, cargando un nuevo valor en el nuevo registro en el tope. Las
+operaciones \textbf{de almacenamiento incrementan} el valor de TOP tras haber
+guardado el valor en memoria principal.
+
+\subsubsection{Carga y descarga de registros}
+
+Las operaciones de carga y descarga de registros de la FPU no permiten usar
+registros del procesador (\texttt{EAX}, \texttt{EBX}...) como operandos, sino
+direcciones de memoria principal..
+
+La carga de datos en la FPU se hace mediante la familia de instrucciones
+\texttt{FLD}. Dado que los registros de la FPU funcionan como una pila, la
+operación de carga solo recibe como parámetro la ubicación de memoria principal.
+
+\begin{gascode}
+  fld origen
+\end{gascode}
+
+Según el tipo de datos que queramos cargar en la FPU, usaremos:
+\begin{itemize}
+\item \texttt{fild} - Carga de enteros. Normalmente usaremos \texttt{filds}
+  (prefijo \texttt{s}) para cargar de una dirección de memoria de doblepalabra (32bits).
+\item \texttt{fld} - Carga de flotantes. Normalmente usaremos \texttt{flds} para
+  cargar de 32 bits, y \texttt{fldl} para cargar de 64 bits
+\end{itemize}
+
+De forma similar, la instrucción \texttt{FST} se usa para \textbf{llevar a
+  memoria} el valor del top de registros de la FPU, indicando la dirección de
+destino junto a la instrucción:
+
+\begin{gascode}
+  fst destino
+\end{gascode}
+
+Según el formato de destino que queramos usar, tenemos disponible varias
+instrucciones:
+
+\begin{itemize}
+\item \texttt{fist} - Para \textbf{enteros}. Lo más habitual es usar \texttt{fistl} (ojo con la l).
+\item \texttt{fst} - Para \textbf{flotantes}. Lo más habitual es usar \texttt{fsts}.
+\end{itemize}
+
+Una operación habitual es pasar un dato a la memoria principal borrándolo de la
+FPU -- esto es, haciendo un \textit{pop} de la pila de registros. Para ello se
+usa la instrucción \texttt{FSTP}, que hace lo mismo que \texttt{FST} añadiendo
+un \textit{pop}. Existen las mismas variantes que en el caso anterior:
+\texttt{fistpl} para enteros, \texttt{fstps} y \texttt{fstpl} para flotantes.
+
+\bigskip
+
+\subsubsection{Operaciones con flotantes}
+
+Para realizar operaciones con flotantes es necesario, lógicamente, que todos los
+operandos se encuentren en la pila de registros de la FPU.
+
+Las instrucciones aritméticas tienen también su versión alternativa que incluye
+un \textit{pop}, añadiendo el sufijo \texttt{p} al final.
+
+\paragraph{Suma}
+
+Utilizaremos la instrucción \texttt{fadd} o \texttt{faddp}, indicando los dos
+registros a sumar, siendo el segundo el destino de la suma final.
+
+\begin{gascode}
+  fadd %st(0), %st(1)
+  faddp  # Es lo mismo que faddp %st(0), %st(1)
+\end{gascode}
+
+\paragraph{Resta}
+
+La resta es similar a la suma, pero usando \texttt{fsub} y \texttt{fsubp}.
+
+\paragraph{Producto}
+
+Igual que la suma y la resta, usando \texttt{fmul} y \texttt{fmulp}.
+
+\paragraph{División}
+
+Igual que lo anterior, pero usando \texttt{fdiv} y \texttt{fdivp}.
+
+\subsubsection{Operaciones con asignación}
+
+Para realizar una operación con asignación (como si usáramos el operador
+\texttt{+=} u otro similar), lo único necesario es realizar la operación
+aritmética de forma normal, para luego descargar el valor del registro en una
+dirección de memoria. Como ejemplo con la suma, si tenemos la dirección de
+destino en la pila:
+
+\begin{gascode}
+  faddp %st, %st(1)
+  popl %edx
+  fstps (%edx)
+\end{gascode}
+
+\subsubsection{Comparaciones}
+
+Las comparaciones se realizan de manera similar a las operaciones. La
+instrucción \texttt{fcom} hace la comparación, por defecto, de \texttt{st0} y
+\texttt{st1}. Existen versiones que también realizan un pop (\texttt{fcomp}) y,
+lo más importante, existen versiones que modifican las flags del registro
+\texttt{EFLAGS} de la CPU, en lugar de las flags de la FPU, siendo posible
+utilizar las operaciones de salto condicional.
+
+En particular, a la hora de comparar números de la FPU se usarán:
+\begin{itemize}
+\item \texttt{jb} y \texttt{jbe} en lugar de \texttt{jl} y \texttt{jle}.
+\item \texttt{ja} y \texttt{jae} en lugar de \texttt{jg} y \texttt{jge}.
+\end{itemize}
+
+Las comparaciones de igualdad se siguen haciendo con \texttt{je} y \texttt{jne}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagebreak
+
+\section{Software de soporte}
+
+\subsection{Compilación}
+
+\subsubsection{Generar código ensamblador de programa C para 32bits}
+Se escribe en un fichero \texttt{main.s}:
+
+\begin{bashcode}
+cc -S -m32 -fno-asynchronous-unwind-tables main.c  
+\end{bashcode}
+
+O directamente en la salida estándar:
+\begin{bashcode}
+cc -S -m32 -fno-asynchronous-unwind-tables main.c -o -
+\end{bashcode}
+
+La flag \texttt{-fno-asynchronous-unwind-tables} elimina las directivas
+adicionales que añade GCC (que comienzan con \texttt{.cfi}) para labores de
+depuración.
+
+\subsubsection{Compilar código ensamblador}
+
+Para generar código objeto usaremos:
+
+\begin{bashcode}
+as -o main.o main.s  
+\end{bashcode}
+
+Podemos añadir información de debug con:
+
+\begin{bashcode}
+as -gstabs -o main.o main.s  
+\end{bashcode}
+
+Finalmente, para enlazar y generar el ejecutable:
+
+\begin{bashcode}
+ld -o salida fichero.o  
+\end{bashcode}
+
+O podemos compilar y enlazar en un solo paso con gcc:
+
+\begin{bashcode}
+cc -m32 o salida -g main.c
+\end{bashcode}
+
+\subsubsection{Resaltar código ensamblador}
+
+\begin{bashcode}
+cat main.s | pygmentize -l gas
+\end{bashcode}
+
+
+\subsection{GDB - Depurador}
+
+Tras compilar (con soporte para depuración) podemos usar el GNU Debugger
+(\texttt{gdb}) para seguir la ejecución de nuestro programa. 
+
+\subsubsection{Lectura de código}
+
+\begin{description}
+  \item[list] Listar el código del programa (opcional: indicar número de línea).
+  \item[disassemble nombreFuncion] Mostrar código ensamblador de una función.
+\end{description}
+
+\subsubsection{Control de la ejecución}
+
+\begin{description}
+\item[gdb ./ejecutable] Lanzar el depurador sobre el ejecutable.
+\item[run] Ejecutar el programa (opcional: indicar argumentos).
+\item[break numLínea] Añadir un breakpoint en un número de línea.
+\item[delete numbreakpoint] Borrar un breakpoint.
+\item[clear] Borrar todos los breakpoints.  
+  \item[step] Pasar a la siguiente instrucción.
+  \item[next] Pasar a la sgte. instrucción ignorando funciones.
+  \item[finish] Continuar hasta que la función retorne.
+  \item[continue] Continuar ejecución normal.
+  \item[kill] Finalizar ejecución.
+\end{description}
+
+\subsubsection{Impresión de información}
+
+\begin{description}
+\item[info registers] Imprimir los valores de los registros (incluyendo eax, ebx, ecx, edx, esp y ebp).
+\item[info variables] Imprimir las variables globales y estáticas.
+\item[info locals] Imprimir las variables locales del marco actual.
+\item[info args] Imprimir los argumentos de la función actual.
+\item[whatis nombre\_variable] Imprimir el tipo de una variable.
+\item[where] Imprimir la pila de llamadas.
+\item[where full] Imprimir la pila de llamadas con las variables locales.
+\item[print \$registro] Imprimir el valor de un registro o de una variable (opcionalmente \texttt{print/format elemento}).
+\item[display \$registro] Imprimir el valor de lo que sea tras cada instrucción.
+\item[x/Formato Dirección] Inspeccionar directamente la memoria. La sintaxis del formato es la siguiente:
+\begin{itemize}
+\item Primero, un entero con la cantidad de posiciones a leer.
+\item Segundo, una letra con el formato, a saber:
+  \begin{description}
+  \item[o] octal
+  \item[x] hexadecimal
+  \item[d] decimal
+  \item[u] unsigned
+  \item[t] binary
+  \item[f] float
+  \item[a] address
+  \item[i] instruction
+  \item[c] char
+  \item[s] string
+  \end{description}
+\item Tercero, una letra con el tamaño de cada posición, a saber:
+  \begin{description}
+  \item[b] byte
+  \item[h] halfword
+  \item[w] word
+  \item[g] doble word
+  \end{description}
+\end{itemize}
+
+Podemos por ejemplo imprimir la stack leyendo la dirección del registro ESP (con \texttt{info registers}) y:
+\begin{verbatim}
+x/10xw $esp
+\end{verbatim}
+
+\end{description}
+
+
+\subsection{Flex}
+
+\textbf{Flex} es un generador de \textbf{analizadores léxicos}. La estructura de
+un fichero \texttt{lexico.l}, con el que se define el analizador léxico, se
+divide en tres bloques separados por los caracteres \texttt{\%\%} :
+
+\begin{ejemplo}
+%{
+// Ficheros de cabecera y declaraciones globales
+#include <iostream>
+
+%}
+
+// Opciones de Flex
+%option noyywrap
+%option yylineno
+
+// Definición de familias usando expresiones regulares
+DIGITO     [0-9]
+
+%%
+
+// Lista de patrones y acciones (en C)
+[ \n\t]  { ; }
+.        { cout << "Caracter: " << yytext << endl; }
+
+%%
+
+// Código C. En un compilador esto está vacío ya que el código
+// del main va en el analizador sintáctico
+
+int main () 
+{
+  // La llamada a yylex inicia el análisis léxico
+  yylex();
+}
+
+\end{ejemplo}
+
+El fichero con la definición léxica se procesa con:
+
+\begin{bashcode}
+flex lexico.l  
+\end{bashcode}
+
+Esto genera un fichero \texttt{lex.yy.c} con la implementación del analizador
+léxico. Entre otras cosas contiene la implementación de la función
+\texttt{yylex}, que irá analizando la entrada y ejecutando las reglas asociadas
+a los patrones que sean reconocidos.
+
+\begin{framed}
+\textbf{Nota:} es posible generar el analizador léxico en C++ usando:
+
+\begin{bashcode}
+flex --c++ lexico.l  
+\end{bashcode}
+
+Esto generará una implementación basada en clases en lugar de funciones libres,
+pero es una opción experimental que no funciona bien.
+\end{framed}
+
+Para compilar, usaremos:
+
+\begin{bashcode}
+g++ lex.yy.c --o ejecutable
+\end{bashcode}
+
+Si se produjese algún error de enlazado, habría que enlazar a la biblioteca de
+flex, añadiendo al comando la opción \texttt{-lfl}
+
+\subsection{Bison}
+
+\textbf{Bison} es un generador de analizadores sintácticos. Se nutre de una
+gramática libre de contexto definida en notación BNF.
+
+El fichero \texttt{sintactico.y}, que suele albergar la definición del
+analizador sintáctico, tiene una estructura igual al fichero \texttt{lexico.l},
+basada en tres partes divididas por los caracteres \texttt{\%\%}
+
+\begin{ejemplo}
+%{
+// Declaraciones de C/C++
+#include <iostream>
+
+// Declaración externa de la función del lexer
+extern int yylex();
+
+%}
+
+// Declaraciones de tókens 
+%token CADENA
+%token INT
+%token CHAR
+
+// Otras declaraciones de Bison
+%start inicial
+
+%%
+// Reglas
+
+inicial : sentencia ';' inicial { /* Código */ }
+        | 
+;
+
+sentencia : INT CADENA
+          | CHAR CADENA
+;
+
+%%
+// Código C/C++
+int main () {
+    yyparse();
+}
+\end{ejemplo}
+
+En la primera sección se definen los tókens que el analizador léxico debe
+devolver. Para que Flex tenga información de esos tókens serán necesarios dos
+pasos. Primero, que Bison genere un fichero de cabecera con esa información, y
+segundo, que nuestro analizador léxico incluya esa cabecera.
+
+El primer paso lo conseguimos con
+
+\begin{bashcode}
+bison -d sintactico.y  
+\end{bashcode}
+
+Esto genera un fichero \texttt{sintactico.tab.h} con la información de los
+tókens. Tendremos que añadir lo siguiente en la sección de declaraciones del
+léxico:
+
+\begin{verbatim}
+#include "sintactico.tab.h";
+\end{verbatim}
+
+También se generará un fichero \texttt{sintactico.tab.c} con la implementación
+del analizador sintáctico, que finalmente habrá que compilar.
+
+\subsubsection{Tókens y símbolos}
+
+El analizador léxico parsea poco a poco la entrada, informando al párser (Bison)
+de lo que encuentra mediante bloques de información conocidos como
+\textbf{tókens}.
+
+La función \textbf{yylex} irá consumiendo la entrada y ejecutando las reglas
+de los patrones HASTA que uno de los patrones devuelva un tóken. Ese token será
+el valor que devuelva la función \texttt{yylex}.
+
+Los tókens pueden ser símbolos definidos mediante la directiva \texttt{\%token}
+en la sección de declaración de Bison, o caracteres individuales. Internamente,
+Bison genera un enumerado con los tókens, asignándoles un valor entero a cada
+uno.
+
+Por otro lado, la \textbf{gramática} con la que se alimenta a Bison se compone
+de \textbf{reglas de producción}, que se dividen en un \textit{símbolo de
+  cabecera} y un \textit{cuerpo}. El cuerpo se compone de símbolos y acciones,
+que se ejecutarán cuando la entrada coincida con esta regla de la gramática:
+
+\begin{ejemplo}
+expresion : NUMERO '+' expresion { cout << "Suma" << endl; }
+          | NUMERO               { cout << "Número" << endl; }
+;  
+\end{ejemplo}
+
+
+
+Los símbolos que componen las reglas de la gramática pueden ser símbolos
+\textit{terminales} (también conocidos como \textit{tókens}), que representan de
+forma simbólica la entrada del lenguaje que estemos analizando, y símbolos
+\textit{no terminales}, que son aquellos que serán reemplazados por otras
+reglas. En el ejemplo anterior, el símbolo \texttt{expresion} es un símbolo no
+terminal, mientras que \texttt{NUMERO} es un símbolo terminal o tóken. 
+
+La cabecera de una regla siempre llevará un símbolo no terminal, mientras que el
+cuerpo podrá incluir símbolos terminales y no terminales.
+
+\subsubsection{Valor de los símbolos}
+
+Todos los símbolos (tanto tókens como no terminales) tienen un valor
+asociado. Algunos símbolos, por ejemplo, necesitarán tener asociada una cadena,
+mientras que otros necesitarán almacenar un puntero. Para gestionar esa
+información, se listan los diferentes tipos de datos en una \texttt{unión} en la
+zona de declaraciones de Bison:
+
+\begin{ejemplo}
+%union {
+  string * puntero;
+  int entero;
+}  
+\end{ejemplo}
+
+Luego, es necesario indicarle a Bison qué tipo de datos usará cada uno de los
+símbolos:
+
+\begin{ejemplo}
+ // No terminales:
+%type <puntero> expresion
+
+ // Terminales:
+%token <entero> NUMERO
+\end{ejemplo}
+
+Al realizar el \textbf{análisis léxico}, el valor de cada tóken se guardará en
+la variable \texttt{yylval}. Para computar ese valor es posible acceder al texto
+reconocido por el analizador, que se encuentra en la variable
+\texttt{yytext}. Será necesario hacer referencia al campo de la unión que tenga
+asignado el símbolo terminal:
+
+\begin{ejemplo}
+[0-9]      { yylval.entero = atoi(yytext); return NUMERO }
+\end{ejemplo}
+
+Para \textbf{acceder} al valor de los símbolos de una regla se puede usar la
+notación del dólar.
+\begin{itemize}
+\item \texttt{\$\$} representa el valor de la cabecera de la regla.
+\item \texttt{\$1, \$2...} representan el valor del elemento 1, 2... de la
+  regla. Las acciones semánticas también pueden tener valor, por lo que afectan
+  a la numeración.
+\item \texttt{\$0, \$-1...} representan el valor de los elementos que aparecen
+  a la izquierda de la regla. Por ejemplo:
+
+  \begin{ejemplo}
+expresion : tipo nombre ';'
+;
+
+nombre : CADENA { /* Aquí $0 es el valor del símbolo tipo */ }
+;    
+  \end{ejemplo}
+\end{itemize}
+%$
+
+\subsubsection{Acciones intercaladas}
+Como se ha comentado, las reglas de producción pueden contener acciones
+semánticas, que se ejecutarán cuando el párser haga uso de esa regla gramatical.
+
+Las acciones pueden colocarse en cualquier punto del cuerpo de una regla,
+ejecutándose en el orden indicado. Internamente, Bison convierte todas esas
+reglas de forma que las acciones semánticas estén al final
+
+\subsubsection{yylineno, yytext, yyerror y yylex}
+
+La función que el léxer provee para leer los tókens de la entrada es
+\texttt{yylex()}. El párser llamará a esa función periódicamente para leer
+tókens de la entrada. Es por ello necesario declarar su existencia en la zona de
+declaraciones del fichero \texttt{sintactico.y}:
+
+\begin{ejemplo}
+%{
+extern int yylex();
+%}  
+\end{ejemplo}
+
+Flex guarda en la variable global \texttt{char * yytext} la entrada que ha
+emparejado con las reglas léxicas, por lo que es posible acceder a ese texto
+desde el párser, declarando (igual que antes) la variable previamente:
+
+\begin{ejemplo}
+%{
+extern int yylex();
+extern char * yytext;
+%}
+\end{ejemplo}
+
+Además, Flex puede informarnos del número de línea de la entrada por la que está
+trabajando en cada momento. Lo hará si añadimos \texttt{\%option yylineno} en la
+zona de declaraciones del \texttt{lexico.l}. Así, la variable global \texttt{int
+  lineno} contendrá el número de línea. Igual que antes, para usarla en el
+párser es necesario declararla previamente.
+
+\begin{ejemplo}
+%{
+extern int yylex();
+extern char * yytext;
+extern int lineno;
+%}
+\end{ejemplo}
+
+Por último, cuando se produce un error de sintaxis Bison llama a la función
+\texttt{yyerror (char *)}, que será necesario definir para poder gestionar los
+mensajes de error correctamente. Una posible implementación podría ser:
+
+\begin{ejemplo}
+void yyerror(const char *msg) {
+    printf("Error: %s, línea: %i, texto: '%s'\n", msg, yylineno, yytext);
+}
+\end{ejemplo}
+
+\section{Algo de teoría: el display de Pascal}
+
+El display es un vector de punteros a registros de activación que se suele
+almacenar en el propio marco de activación, y en general, es más rápido que
+seguir los enlaces de acceso.
+
+Algunas instrucciones de ensamblador de la arquitectura Intel x86 son capaces de
+reservar bytes de espacio para variables locales y organizar un display de
+profundidad \textit{``prof''}. Para ello copian, en parte, el display del marco
+de activación anterior y lo modifican adecuadamente.
+
+En Pascal, cuando se establece un nuevo registro de activación para un
+procedimiento a profundidad de anidamiento $i$:
+
+\begin{itemize}
+\item Se guarda el vector actual de $d[i]$ dentro del nuevo registro de
+  activación.
+\item Se apunta $d[i]$ al nuevo registro de activación.
+\end{itemize}
+
+Justo antes de que finalice una activación, se restablece $d[i]$ al valor guardado
+en el registro de activación.
+
+En cuanto a los enlaces (dinámicos), se trata de funciones que asocian a un
+cierto identificador una dirección de almacenamiento. En relación al display de
+Pascal, cada vez que se activa un procedimiento, a sus variables locales
+automáticas se les liga direcciones diferentes.  Esto es un enlace dinámico. Los
+enlaces dinámicos son los que se determinan en tiempo de compilación y se dan en
+otros lenguajes como Fortran o Cobol.
+
+\pagebreak
+
+\section{Ejemplos de código ensamblador}
+
+\subsection{Cargar un flotante y devolverlo como entero}
+
+\begin{gascode}
+    .file   "main.c"
+    .section    .rodata
+
+cadena:
+    .string "%i\n"    
+    
+base:
+    .float 28.9732
+
+    .text
+
+    .globl  main
+    .type   main, @function
+main:
+    pushl   %ebp
+    movl    %esp, %ebp    
+
+    flds base    
+    fistpl -4(%esp)  
+    movl -4(%esp), %eax
+    
+    pushl %eax
+    pushl $cadena
+    call printf
+
+    leave
+    ret
+
+    .size   main, .-main 
+\end{gascode}
+%$
+
+\pagebreak
+
+\subsection{Potencia de enteros}
+
+\begin{gascode}
+    .file   "main.c"
+    .section    .rodata
+.LC0:
+    .string "%i\n"
+    .text
+    .globl  main
+    .type   main, @function
+main:
+    pushl   %ebp
+    movl    %esp, %ebp
+
+    # izq->generar
+    # Uso 5 como ejemplo
+    movl $5, %eax
+    pushl %eax
+
+    #der->generar
+    # Uso 2 como ejemplo
+    movl $2, %eax
+
+    popl %edx
+    movl %eax, %ecx
+    movl $1, %eax
+
+inicio:
+    cmp $0, %ecx
+    je final
+    subl $1, %ecx
+    imull %edx, %eax
+    jmp inicio
+
+final:
+
+    # Imprimo
+    pushl   %eax
+    pushl   $.LC0
+    call    printf
+
+    leave
+    ret
+    .size   main, .-main
+  
+\end{gascode}
+
+\pagebreak
+
+\subsection{Potencia de flotantes}
+
+\begin{gascode}
+    .file   "main.c"
+    .section    .rodata
+.LC0:
+    .string "%i\n"
+
+base:
+    .float 2.5
+
+    .text
+    .globl  main
+    .type   main, @function
+main:
+    pushl   %ebp
+    movl    %esp, %ebp
+    
+    # Antes de generar meto 1 en la FPU
+    fld1
+
+    # izq->generar
+    # Esto genera la base, que previamente esta en la FPU
+    flds base
+
+    # der->generar
+    # Esto genera el exponente, que debe ser entero
+    movl $3, %eax
+
+    # Muevo el contador a ECX
+    movl %eax, %ecx
+
+inicio:
+    # Si es 0, salto a la salida
+    cmp $0, %ecx
+    je final
+
+    # Decremento el contador
+    subl $1, %ecx
+
+    # Hago el producto
+    fmul %st(0), %st(1)
+
+    # Salto al inicio
+    jmp inicio
+
+final:
+    # Al final hago un pop de la pila de la FPU
+    fstps -4(%esp)
+
+    # En este punto st(0) contiene el resultado
+    leave
+    ret
+    .size   main, .-main  
+\end{gascode}
+
+
+
+\end{document}

@@ -1,0 +1,1658 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2013 by Charles P. Schaum <charles dot schaum at att dot net> ---------------------------------------------------------------------------
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3
+% of this license or (at your option) any later version.
+% The latest version of this license is in
+% http://www.latex-project.org/lppl.txt
+% and version 1.3 or later is part of all distributions of LaTeX
+% version 2005/12/01 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+%
+% The Current Maintainer of this work is Charles P. Schaum.
+%
+% This work consists of the files schemata.dtx and schemata.ins
+% and the derived filebase schemata.sty.
+%
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{schemata.dtx}
+%</driver>
+%<package>\expandafter\ifx\csname newenvironment\endcsname\relax%
+%<package>\else
+%<package>\NeedsTeXFormat{LaTeX2e}[2005/12/01]
+%<package>\ProvidesPackage{schemata}
+%<*package>
+    [2013/03/10 v0.6 generic package to aid construction of topical categories]
+%<package>\fi
+%</package>
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polutonikogreek,american]{babel}
+\newcommand{\gk}[1]{\foreignlanguage{polutonikogreek}{#1}}
+\usepackage{makeidx}
+\usepackage{mflogo}
+\usepackage{multicol}
+\usepackage[toc]{multitoc}
+\usepackage{schemata}[2013/03/10]
+\usepackage{hypdoc}
+\makeindex
+\frenchspacing
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{schemata.dtx}
+  \PrintChanges
+  \PrintIndex
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{628}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+%
+% \changes{v0.5}{2013/02/14}{Initial version}
+% \changes{v0.6}{2013/03/10}{Added features}
+%
+% \DoNotIndex{\@Schem@, \@Schema, \@schem@, \@schema, \@schemab@x, \@schemabox, \Schem@, \schem@, \schemab@x, \bfseries, \bgroup, \catcode, \csname, \DeclareOption, \def, \dimen, \egroup, \else, \endcsname, \endinput, \ExecuteOptions, \expandafter, \fi, \futurelet, \gdef, \hbox, \hfil, \if, \ifcsname, \ifdim, \ifmmode, \ifx, \ignorespaces, \index, \itshape, \let, \newbox, \newcommand, \newdimen, \next, \Open, \Option, \PackageWarning, \ProcessOptions, \relax, \RequirePackage, \scshape, \setbox, \space, \testchar, \vbox, \vfil, \vskip}
+%
+% \GetFileInfo{schemata.dtx}
+% \title{The \textsf{schemata} package}
+% \author{Charles P. Schaum \\ \texttt{charles dot schaum at att dot net}}
+% \date{\fileversion~from \filedate}
+% \maketitle
+%
+% \begin{abstract}
+% \noindent The \textsf{schemata} package facilitates the creation of topical schemata, outlines that use braces (or facsimiles thereof) to illustrate the breakdown of concepts and categories in Scholastic thought from late medieval and early modern periods. This packages functions with both plain \TeX{} and \LaTeX.
+% \end{abstract}
+%
+% \tableofcontents
+%
+% \section{Introduction}
+%
+% This package emerged from my personal need to typeset diagrams based on seventeenth-century theology books. I have chosen to make it use a very ``bare-bones'' approach that is platform-agnostic in many cases, simple to implement, and immune to a number of special cases because it requires manual formatting.
+%
+% I would recommend that a package like \emph{TikZ}, \textsf{PSTricks}, \MP, or some other powerful solution may have advantages, especially for those seeking a top-to-bottom diagram, such as that in; \textsc{H.~Dembowski}, \emph{Einf{\"u}hrung in die Christologie} (Darmstadt, 1993), 146. This package is meant to be basic and available in minimal \TeX{} installations.
+%
+% This package allows one to mimic (to some degree) the left-to-right schemata seen in books like the \emph{Loci Theologici} of Martin Chemnitz and the \emph{Clavis Scripturae Sacrae} of M. Flacius Illyricus.
+%
+% \section{Usage}
+%
+% \subsection{Package Options and Loading}
+%
+% \LaTeX{} users can choose among three package options: |braces|, |brackets|, and |parens|. These set the defaults for the ``branches.'' If no options are chosen, the default is |braces|. Plain \TeX{} and \LaTeX{} users can use the |\DoBraces|, |\DoBrackets|, and |\DoParens| macros for the same effect. The default still remains braces.\\
+%
+% \begin{tabular}{ll}
+% Users of \LaTeX{} invoke: & |\usepackage[|\meta{options}|]{schemata}|\\[1ex]
+% Plain \TeX{} users will use: & |\input|\textvisiblespace|schemata.sty|
+% \end{tabular}
+%
+% \subsection{Overview}
+%
+% \DescribeMacro{\schema}
+% The ``simple'' form of a schema consists of one left-hand side containing vertically-centered vertical material, a brace, and one right-hand side containing vertically-centered vertical material:
+% \begin{quote}
+% \cmd{\schema}\oarg{type}\marg{left-hand side}\marg{right-hand side}
+% \end{quote}
+% The \meta{type} of a schema is |open| by default. Anything other than the exact string |open| will make it a ``closed'' schema where the left-hand side is bigger than the right and the direction of the brace reflects that. This approach is based on my experience that trying to figure out the size of left-hand and right-hand sides automatically can lead to strange corner cases. This manual solution recognizes that most schemata read and open from left to right.
+%
+% The \meta{left-hand side} and \meta{right-hand side} are vertically-centered material in a |\vbox|. This is intentional because one might want to insert a |\smallskip| or other adjustment as needed. One can put whatever is desired in these arguments. An example in \LaTeX{} might be a one-column tabular environment, e.g.:
+% \begin{multicols}{2}
+% \noindent Code:\\[2ex]
+% |\schema%|\\
+% |{%|\\
+% |  \hbox{\begin{tabular}{@{}l@{}}|\\
+% |    This conists\\|\\
+% |    of stuff|\\
+% |  \end{tabular}}|\\
+% |}%|\\
+% \noindent|{%|\\
+% |  \schemabox{%|\\
+% |    And here\\|\\
+% |    we have\\|\\
+% |    more stuff%|\\
+% |  }%|\\
+% |}|\\
+% \columnbreak\\
+% \noindent Result:\\[2ex]
+% \schema%
+% {%
+%   \hbox{\begin{tabular}{@{}l@{}}
+%     This conists\\
+%     of stuff\\
+%   \end{tabular}}
+% }%
+% {%
+%   \schemabox{%
+%     And here\\
+%     we have\\
+%     more stuff%
+%   }%
+% }
+%
+% \noindent Note how the results of the two sides are similar. In fact, if one uses a |p{|\meta{width}|}| argument with a tabular, one will get similar results seen with a |\schemabox| using a width argument. The formar still must be enclosed in an |\hbox|. The latter is intended for use in plain \TeX.
+%
+% The |\schemabox| macro is a ``stack'' of |\hbox| content within a |\vbox|. We will cover it below after we introduce the |\Schema| macro.
+% \end{multicols}
+% \clearpage
+% \DescribeMacro{\Schema}
+% The ``complex'' form of a schema consists of one left-hand side containing vertically-centered vertical material, a brace, and one right-hand side of vertically-centered vertical material:
+% \begin{quote}
+% \cmd{\Schema}\oarg{type}\marg{adjust}\marg{size}\marg{left-hand side}\marg{right-hand side}
+% \end{quote}
+%The \meta{type} of a schema is |open| by default. Anything other than the exact string |open| will make it a ``closed'' schema as above.
+%
+%Both \meta{adjust} and \meta{size} should be expressed in ``ex'', loosely interpreted as multiples of lines. Since an |hbox{\strut}| is 2.88538 ex high and |\vcenter| halves vertical height, the values are multiplied internally by 1.44265.
+%
+%Actually, \meta{adjust} must be \emph{double} the number of ``ex'' lines that a brace must go up (negative value) or down (positive value). By making one enter |-5ex| to pull a brace up 2.5 lines, one can use a whole number instead of entering many decimals.
+%
+% {\bfseries Note:} The value of \meta{size} always should be positive.\smallskip
+%
+% Admittedly, this method is nothing short of ugly. Yet it scales quite well and allows one to guess lengths by counting lines (even in the source) instead of measuring printed or displayed output.\\
+%
+% \DescribeMacro{\schemabox}
+% This box stacks one or more lines of |\hbox|-enclosed material in a |\vbox|. It redefines the control sequence |\\| in a manner that terminates the current |\hbox| and begins a new one.
+% \begin{quote}
+% \cmd{\schemabox}\oarg{width}\marg{text}
+% \end{quote}
+% The \meta{width} of a |\schemabox| is a dimension, e.g. 3cm. No wrapping takes place. Each line of \meta{text} must be terminated explicitly by |\\|, except the final line. The first line of a |\schemabox| inserts a |\strut| for aesthetic reasons.
+%
+% Certainly, it is not mandatory to use a |\schemabox|. Indeed, anything that creates a box whose width is smaller than |\textwidth| can be useful. For example, one can create 1cm$^2$ boxes:\\[1ex]
+% |   \def\Box{\hbox{\vrule\vbox to 1cm{%|\\
+% |                  \hrule\hbox to 1cm{\hfil}\vfil\hrule}\vrule}}|\\
+% \def\Box{\hbox{\vrule\vbox to 1cm{\hrule\hbox to 1cm{\hfil}\vfil\hrule}\vrule}}
+%
+% \begin{tabular}{lll}
+% \schema{\Box}{\Box} & \schema{\Box}{\Box\Box} & \Schema{-0.2ex}{0.9cm}{\Box}{\Schema[close]{-0.2ex}{0.9cm}{\Box\hbox{\Box\kern0.2em}}{\Box}}\\
+% \end{tabular}
+%
+% \medskip\noindent Both |\schema| and |\Schema| are vertical, so they will stack vertically if invoked sequentially. A |tabular| environment prevented that stacking above. If one does not use ``ex'' height for \meta{size} in a |\Schema|, one should specify a \meta{size} slightly less than half the height of the contents. Above, a \meta{size} of |0.9cm| suffices for a content of |2cm|. This approach is meant to facilitate sizing content according to lines of text, which is what schemata usually hold.
+%
+% \subsection{Tutorial}
+%
+% \subsubsection{Starting Off Basic}
+%
+% Imagine that you are using a computer to simulate the physical typesetting of a seventeenth-century schema. To begin with, you try the following schema:
+% \begin{multicols}{2}
+% \noindent Code:\\[2ex]
+% |\schema{a}{b\\c}|\\
+% \noindent Result:\\[2ex]
+% \schema{a}{b\\c}
+% \end{multicols}
+% \noindent That did not go well. Then you remember this weird |\schemabox| that just might work. You |\let| the control sequence to the shorter |\SB| and you get:
+% \begin{multicols}{2}
+% \noindent Code:\\[2ex]
+% |\let\SB\schemabox|\\
+% |\schema{\SB{a}}{\SB{b\\c}}|\\
+% \noindent Result:\\[2ex]
+% \let\SB\schemabox
+% \schema{\SB{a}}{\SB{b\\c}}
+% \end{multicols}
+%
+% \noindent Now we are getting somewhere! Note that the side of the schema that ``opens up'' really should be more than one line high:\\
+%
+% \noindent\begin{tabular}{lllllllll}
+% \schema{\schemabox{a}}{\schemabox{b}} & \schema{\schemabox{a}}{\schemabox{b\\c}} & \Schema{0ex}{2ex}{\schemabox{a}}{\Schema[close]{0ex}{2ex}{\schemabox{b\\c}}{\schemabox{d}}} & \DoBrackets \schema{\schemabox{a}}{\schemabox{b}} & \DoBrackets \schema{\schemabox{a}}{\schemabox{b\\c}} & \DoBrackets \Schema{0ex}{2ex}{\schemabox{a}}{\Schema[close]{0ex}{2ex}{\schemabox{b\\c}}{\schemabox{d}}} & \DoParens \schema{\schemabox{a}}{\schemabox{b}} & \DoParens \schema{\schemabox{a}}{\schemabox{b\\c}} & \DoParens \Schema{0ex}{2ex}{\schemabox{a}}{\Schema[close]{0ex}{2ex}{\schemabox{b\\c}}{\schemabox{d}}}\\
+% \end{tabular}\\
+%
+% \noindent\DescribeMacro{\DoBraces} The left three examples use braces. This is the default, but it is also triggered by |\DoBraces|. \DescribeMacro{\DoBrackets} The center three examples are achieved with |\DoBrackets|. \DescribeMacro{\DoParens} The right three result from using |\DoParens|. All three macros should precede |\schema| and |\Schema| within a particular scope, and they remain in force in that scope unless changed. A height of 1.44265ex is added automatically to the height of the delimiters to aid the appearance of multi-line schemata.
+%
+% \subsubsection{\emph{Loci} 101}
+%
+% Since we know something about schemata and how to do them, let's try a few examples from \emph{Loci Theologici}. We begin with this simple example:\\
+%
+%\schema
+%{%
+%  \schemabox{Subjectum theo-\\
+%      logi\ae{} est Notitia\\
+%      Dei. Considerat\\
+%      ergo, Dei, vel}
+%}
+%{%
+%  \schema
+%  {%
+%    \schemabox{\textsc{Essentiam},}
+%  }
+%  {%
+%    \schemabox{Unitate natur\ae{}.\\
+%        Trinitate personarum.\\
+%        Operibus ad intra.}}
+%  \schema
+%  {%
+%    \schemabox{\textsc{Voluntatem},\\
+%        manifestatam in\\
+%        operibus ad extra;\\
+%        ut in}
+%  }
+%  {%
+%    \schemabox{Creatione.\\
+%        Sustentatione natur\ae{} laps\ae{}.\\
+%        Reparatione.\\
+%        Conversione.\\
+%        Justificatione.\\
+%        Sanctificatione \&\\
+%        Glorificatione ejusdem.}
+%  }
+%}
+%
+% Something is off here. The ``simple'' schema automatically adjusts the brace height to the right-hand side. But that includes the \emph{entire} right-hand side. Moreover, |\schema| will produce cumulatively larger braces when nesting.
+%
+% This package requires the user to make manual alignment and adjustment to the braces when the entire right-hand side is not to be enclosed. This is because one might insert vertical space at various points that make automatic calculation of brace height somewhat less than trivial. This example is fairly simple and requires only two changes at the places indicated, namely:
+%
+% \bgroup\footnotesize%
+% \begin{multicols}{2}
+%\noindent|\schema% Change to \Schema{-1ex}{8.6ex}|\\
+%|{%|\\
+%|  \schemabox{Subjectum theo-\\|\\
+%|      logi\ae{} est Notitia\\|\\
+%|      Dei. Considerat\\|\\
+%|      ergo, Dei, vel}|\\
+%|}|\\
+%|{%|\\
+%|  \schema|\\
+%|  {%|\\
+%|    \schemabox{\textsc{Essentiam},}|\\
+%|  }|\\
+%|  {%|\\
+%|    \schemabox{Unitate natur\ae{}.\\|\\
+%|        Trinitate personarum.\\|\\
+%|        Operibus ad intra.}|\\
+%|  }% Add\smallskip here|\\\columnbreak\\
+%|  \schema|\\
+%|  {%|\\
+%|    \schemabox{\textsc{Voluntatem},\\|\\
+%|        manifestatam in\\|\\
+%|        operibus ad extra;\\|\\
+%|        ut in}|\\
+%|  }|\\
+%|  {%|\\
+%|    \schemabox{Creatione.\\|\\
+%|        Sustentatione natur\ae{} %|\\
+%|          laps\ae{}.\\|\\
+%|        Reparatione.\\|\\
+%|        Conversione.\\|\\
+%|        Justificatione.\\|\\
+%|        Sanctificatione \&\\|\\
+%|        Glorificatione ejusdem.}|\\
+%|  }|\\
+%|}|\\
+% \end{multicols}
+% \egroup
+%
+% \noindent The commented text |% Add\smallskip here| at the bottom of the left column indicates where a little vertical space between the right-hand ``leaves'' of the ``tree'' might help. We remove the comment and insert a |\smallskip|. The general rule is:\\
+%
+% \noindent\ \ |\schema|\dots\marg{right-hand side}\meta{vert-space}
+%
+% \noindent\ \ |\Schema|\dots\marg{right-hand side}\meta{vert-space}\\
+%
+% \noindent One also may insert space within a |\schemabox|, but one should avoid doing that in either the first or last lines when inside a |\schema|.
+%
+% Having adjusted the ``leaves,'' we now work toward the ``root.'' The |\Schema| macro requires manual brace adjustment and sizing. It is best used in cases where either the left or right-hand sides include a |\schema| or a |\Schema|. Manual adjustment is achieved by counting lines, estimating, and refining the estimate.
+%
+% Even in the source above, one can estimate eight lines of output text from ``\textsc{Essentiam}'' down to ``ut in.'' Set \meta{size} to |8ex| and \meta{adjust} to |0ex|. The large brace will be a little too low. Set \meta{adjust} to |-1ex| to raise the brace about half a line and to lower the left-hand side about half a line, keeping everything centered. Finally, setting \meta{size} to |8.6ex| gives a better result.
+%
+%\Schema{-1ex}{8.6ex}
+%{%
+%  \schemabox{Subjectum theo-\\
+%      logi\ae{} est Notitia\\
+%      Dei. Considerat\\
+%      ergo, Dei, vel}
+%}
+%{%
+%  \schema
+%  {%
+%    \schemabox{\textsc{Essentiam},}
+%  }
+%  {%
+%    \schemabox{Unitate natur\ae{}.\\
+%        Trinitate personarum.\\
+%        Operibus ad intra.}
+%  }\smallskip
+%  \schema
+%  {%
+%    \schemabox{\textsc{Voluntatem},\\
+%        manifestatam in\\
+%        operibus ad extra;\\
+%        ut in}
+%  }
+%  {%
+%    \schemabox{Creatione.\\
+%        Sustentatione natur\ae{} %
+%          laps\ae{}.\\
+%        Reparatione.\\
+%        Conversione.\\
+%        Justificatione.\\
+%        Sanctificatione \&\\
+%        Glorificatione ejusdem.}
+%  }
+%}\medskip
+%
+% \noindent Many schemata, such as ones that illustrate the relationship of figures and tropes to the literal sense of a text, are no more complex than this:
+%
+% \begin{displaymath}
+% \LCschema%
+% \Schema{0ex}{4.8ex}
+% {\hbox{sensus literalis}}
+% {%
+%   \schema{\schemabox{sensus\\literalis\\(improprie)}}%
+%          {\schemabox{ex parallelismo clarior\\ex analogia fidei\\ex evidentia rei}}%
+%           \smallskip\schemabox{sensus literae}
+% }
+% \UCschema%
+% \end{displaymath}
+% |\LCschema%|\\
+% |\Schema{-1ex}{5ex}|\\
+% |{\hbox{Sensus literalis}}|\\
+% |{%|\\
+% |  \schema{\schemabox{Sensus\\literalis\\(improprie)}}%|\\
+% |         {\schemabox{Ex parallelismo clarior\\%|\\
+% |                     Ex analogia fidei\\Ex evidentia rei}}%|\\
+% |          \medskip\schemabox{Sensus literae}|\\
+% |}|\\
+% |\UCschema%|\\[2ex]
+% \DescribeMacro{\LCschema}
+% \DescribeMacro{\UCschema}
+% By default, a |\schemabox| automatically adds a |\strut| to the first line because it is often the case that the topics in a schema start in some fashion with a capitalized letter. Using |\Schema| allows one to manually adjust the brace height, but |\schema|, as used above, looks wrong with the lowercase content unless one uses |\LCschema| in order to suppress adding a |\strut|. |\UCschema| restores the default.
+%
+% \DescribeMacro{\SwitchSB} |\SwitchSB| is a ``per-use'' macro that causes a particular |\schemabox| to do the opposite of whatever |\LCschema| and |\UCschema| call for. It should be placed immediately before the |\schemabox| and is reset thereafter.
+%
+% This still does not correct for the fact that |\schema| adjusts its height with respect to the ascenders and descenders, not the height of the first letter. Inserting |\vskip-0.8ex| before |\schemabox{Ex parallelismo|\dots{} causes the material in the |\schema| to look centered on the first letters. Still, if one must go to all that trouble, one could easily use |Schema|.
+%
+% This example also shows that one can have a heterogeneous collection of vertically-centered material within the LHS and RHS braces of |\Schema|. Doing that with |\schema| is not recommended.
+% \clearpage
+%
+% \subsubsection{Going Big}
+%
+% We begin with the following example, where the |\Schema| braces all have dummy values of |0ex| \meta{adjust} and |5ex| \meta{size}. Perhaps the indentation helps to give a sense of the nesting and how the result might end up:
+%
+% \bgroup\footnotesize%
+% \begin{multicols}{2}
+%\noindent |\Schema{0ex}{5ex}|\\
+%|{%|\\
+%|  \schemabox{Subjectum \& summa\\|\\
+%|    univers\ae{} Scriptur\ae{},\\|\\
+%|    est \textsc{Cognitio} vel}|\\
+%|}|\\
+%|{%|\\
+%|  \Schema{0ex}{5ex}|\\
+%|  {%|\\
+%|    \schemabox{\textsc{Dei}, qualis\\|\\
+%|      sit, aut}|\\
+%|  }|\\
+%|  {%|\\
+%|    \schema|\\
+%|    {\schemabox{\textsc{Per se}:\\ scilicet.}}|\\
+%|    {%|\\
+%|      \schemabox{Unus in essentia.\\|\\
+%|        Trinus in personis.}|\\
+%|    }|\\
+%|    \schema|\\
+%|    {\schemabox{Ad hominem\\ quem vel}}|\\
+%|    {%|\\
+%|      \schemabox{Accusat \& terret, %|\\
+%|        \textsc{Per Legem},\\|\\
+%|        Consolatur \& erigit, %|\\
+%|        \textsc{Per Evangelium}.\\|\\
+%|        Salvat, \textsc{Per Christum}.\\|\\
+%|        Renovat, \textsc{Per Spiritum%|\\
+%|        Sanctum}.\\|\\
+%|        Sanctificat, \textsc{Per Verbum} \& %|\\
+%|        \textsc{Sacramenta}.\\|\\
+%|        Castigat, tentat \& exercet, %|\\
+%|        \textsc{Per Crucem}.\\|\\
+%|        Glorificat \textsc{Per %|\\
+%|        Resurrectionem Carnis}\\|\\
+%|        \textsc{Ad Vitam \AE{}ternam}.}|\\
+%|    }|\\
+%|  }|\\
+%|  \Schema{0ex}{5ex}|\\
+%|  {%|\\
+%|    \schemabox|\\
+%|    {%|\\
+%|      \textsc{Hominis},\\ qualis sit|\\
+%|    }|\\
+%|  }|\\
+%|  {%|\\
+%|    \Schema{0ex}{5ex}|\\
+%|    {\schemabox{\textsc{Per se}:}}|\\
+%|    {%|\\
+%|      \schemabox{Ante lapsum.}|\\
+%|      \schema|\\
+%|      {\schemabox{Post lapsum:}}|\\
+%|      {%|\\
+%|        \schemabox{Ante Regenerationem \&\\|\\
+%|          Renovationem S. Sancti.}|\\
+%|        \schemabox{Post Regenerationem \&\\|\\
+%|          Renovationem S. Sancti.}|\\
+%|      }|\\
+%|    }|\\
+%|    \Schema{0ex}{5ex}|\\
+%|    {\schemabox{Ad}}|\\
+%|    {%|\\
+%|      \schema|\\
+%|      {\schemabox{\textsc{Deum}}}|\\
+%|      {%|\\
+%|        \schemabox{P\oe{}nitentia agens, %|\\
+%|          agnitis peccatis \&\\|\\
+%|          ira Dei cognita \textsc{Ex Lege}.\\|\\
+%|          Erigens se \textsc{Voce Evangelii}.\\|\\
+%|          Credens \textsc{In Christum Salvatorem}.\\|\\
+%|          Non repugnans \textsc{Spiritui Sancto} %|\\
+%|          impellenti.\\|\\
+%|          Audiens \textsc{Verbum}: \& utens %|\\
+%|          \textsc{Sacramentis}.\\|\\
+%|          Patienter \& constanter sufferens %|\\
+%|          \textsc{Crucem}.\\|\\
+%|          Sperans \& expectans glorificationem\\|\\
+%|          \textsc{In Resurrectione Carnis}\\|\\
+%|          \textsc{Ad Vitam \AE{}ternam}.}|\\
+%|      }|\\
+%|      \schema|\\
+%|      {\schemabox{seipsum ratione}}|\\
+%|      {\schemabox{Anim\ae{}\\ vel\\ Corporis}}|\\
+%|      \Schema{0ex}{5ex}|\\
+%|      {\schemabox{Proximum,}}|\\
+%|      {%|\\
+%|        \schema|\\
+%|        {\schemabox{Amicum ra-\\ tione vel}}|\\
+%|        {%|\\
+%|          \schemabox{Religionis.\\|\\
+%|            Politic\ae{} \& \OE{}conomic\ae{}.\\|\\
+%|            Cognationis.\\|\\
+%|            Agnationis.}|\\
+%|        }|\\
+%|        \schemabox{Inimicum.}|\\
+%|      }|\\
+%|    }|\\
+%|  }|\\
+%|}|\\
+% \end{multicols}
+%\egroup
+%\clearpage
+% Below is the result of that code (with additions for spacing). It looks pretty bad, except where the |\schema| macros have extended their braces. Think of a |\schema| as a ``leaf'' on the right-hand side and you get the idea.\\
+%
+% \bgroup\footnotesize%
+%\Schema{0ex}{5ex}
+%{%
+%  \schemabox{Subjectum \& summa\\
+%      univers\ae{} Scriptur\ae{},\\
+%      est \textsc{Cognitio} vel}
+%}
+%{%
+%  \Schema{0ex}{5ex}
+%  {%
+%    \schemabox{\textsc{Dei}, qualis \\%
+%      sit, aut}
+%  }
+%  {%
+%    \schema
+%    {\schemabox{\textsc{Per se}:\\ scilicet.}}
+%    {%
+%      \schemabox{Unus in essentia.| <---space|\\%
+%        Trinus in personis.| <---space|}
+%    }
+%    \schema
+%    {\schemabox{Ad hominem\\ quem vel}}
+%    {%
+%      \schemabox{Accusat \& terret, %
+%        \textsc{Per Legem},\\
+%        Consolatur \& erigit, %
+%        \textsc{Per Evangelium}.\\
+%        Salvat, \textsc{Per Christum}.\\
+%        Renovat, \textsc{Per Spiritum%
+%        Sanctum}.\\
+%        Sanctificat, \textsc{Per Verbum} \& %
+%        \textsc{Sacramenta}.\\
+%        Castigat, tentat \& exercet, %
+%        \textsc{Per Crucem}.\\
+%        Glorificat \textsc{Per %
+%        Resurrectionem Carnis}\\
+%        \textsc{Ad Vitam \AE{}ternam}.| <---space|}
+%    }
+%  }
+%  \Schema{0ex}{5ex}
+%  {%
+%    \schemabox
+%    {%
+%      \textsc{Hominis},\\ qualis sit
+%    }
+%  }
+%  {%
+%    \Schema{0ex}{5ex}
+%    {\schemabox{\textsc{Per se}:}}
+%    {%
+%      \schemabox{Ante lapsum.| <---space|}
+%      \schema
+%      {\schemabox{Post lapsum:}}
+%      {%
+%        \schemabox{Ante Regenerationem \&\\
+%          Renovationem S. Sancti.| <---space|}
+%        \schemabox{Post Regenerationem \&\\
+%          Renovationem S. Sancti.| <---space|}
+%      }
+%    }
+%    \Schema{0ex}{5ex}
+%    {\schemabox{Ad}}
+%    {%
+%      \schema
+%      {\schemabox{\textsc{Deum}}}
+%      {%
+%        \schemabox{P\oe{}nitentia agens, %
+%          agnitis peccatis \&\\
+%          ira Dei cognita \textsc{Ex Lege}.\\
+%          Erigens se \textsc{Voce Evangelii}.\\
+%          Credens \textsc{In Christum Salvatorem}.\\
+%          Non repugnans \textsc{Spiritui Sancto} %
+%          impellenti.\\
+%          Audiens \textsc{Verbum}: \& utens %
+%          \textsc{Sacramentis}.\\
+%          Patienter \& constanter sufferens %
+%          \textsc{Crucem}.\\
+%          Sperans \& expectans glorificationem\\
+%          \textsc{In Resurrectione Carnis}\\
+%          \textsc{Ad Vitam \AE{}ternam}.| <---space|}
+%      }
+%      \schema
+%      {\schemabox{seipsum ratione}}
+%      {\schemabox{Anim\ae{}\\ vel\\ Corporis| <---space|}}
+%      \Schema{0ex}{5ex}
+%      {\schemabox{Proximum,}}
+%      {%
+%        \schema
+%        {\schemabox{Amicum ra-\\ tione vel}}
+%        {%
+%          \schemabox{Religionis.\\
+%            Politic\ae{} \& \OE{}conomic\ae{}.\\
+%            Cognationis.\\
+%            Agnationis.| <---space|}
+%        }
+%        \schemabox{Inimicum.}
+%      }
+%    }
+%  }
+%}
+%\egroup\vspace{2ex}
+%\noindent The first order of business is to determine the spacing of the ``leaves'' of the tree, both within and between schemata. The places where one might wish to add vertical space are indicated by |<---space| in the figure above.
+%
+% It really is necessary to work from right to left here. One might think that he or she can guess roughly how big a brace might be. While that may be true, what will happen if you try to size the braces before spacing out the text on the right-hand side is that you will have to go back and forth, tweaking this and that, until you get what you want. That is a waste of time and a source of frustration. Steel yourself to avoid temptation and begin rigorously by adding vertical space after selected instances of |\Schema| or |\schema|, or within a |\schemabox|. The list on the next page shows the changes.
+%
+% \bgroup\footnotesize%
+%\Schema{0ex}{5ex}
+%{%
+%  \schemabox{Subjectum \& summa\\
+%      univers\ae{} Scriptur\ae{},\\
+%      est \textsc{Cognitio} vel}
+%}
+%{%
+%  \Schema{0ex}{5ex}
+%  {%
+%    \schemabox{\textsc{Dei}, qualis \\%
+%      sit, aut}
+%  }
+%  {%
+%    \schema
+%    {\schemabox{\textsc{Per se}:\\ scilicet.}}
+%    {%
+%      \schemabox{Unus in essentia.\smallskip\\%
+%        Trinus in personis.}
+%    }\smallskip
+%    \schema
+%    {\schemabox{Ad hominem\\ quem vel}}
+%    {%
+%      \schemabox{Accusat \& terret, %
+%        \textsc{Per Legem},\\
+%        Consolatur \& erigit, %
+%        \textsc{Per Evangelium}.\\
+%        Salvat, \textsc{Per Christum}.\\
+%        Renovat, \textsc{Per Spiritum%
+%        Sanctum}.\\
+%        Sanctificat, \textsc{Per Verbum} \& %
+%        \textsc{Sacramenta}.\\
+%        Castigat, tentat \& exercet, %
+%        \textsc{Per Crucem}.\\
+%        Glorificat \textsc{Per %
+%        Resurrectionem Carnis}\\
+%        \textsc{Ad Vitam \AE{}ternam}.}
+%    }\medskip
+%  }
+%  \Schema{0ex}{5ex}
+%  {%
+%    \schemabox
+%    {%
+%      \textsc{Hominis},\\ qualis sit
+%    }
+%  }
+%  {%
+%    \Schema{0ex}{5ex}
+%    {\schemabox{\textsc{Per se}:}}
+%    {%
+%      \schemabox{Ante lapsum.}\smallskip
+%      \schema
+%      {\schemabox{Post lapsum:}}
+%      {%
+%        \schemabox{Ante Regenerationem \&\\
+%          Renovationem S. Sancti.}\medskip
+%        \schemabox{Post Regenerationem \&\\
+%          Renovationem S. Sancti.}
+%      }\smallskip
+%    }
+%    \Schema{0ex}{5ex}
+%    {\schemabox{Ad}}
+%    {%
+%      \schema
+%      {\schemabox{\textsc{Deum}}}
+%      {%
+%        \schemabox{P\oe{}nitentia agens, %
+%          agnitis peccatis \&\\
+%          ira Dei cognita \textsc{Ex Lege}.\\
+%          Erigens se \textsc{Voce Evangelii}.\\
+%          Credens \textsc{In Christum Salvatorem}.\\
+%          Non repugnans \textsc{Spiritui Sancto} %
+%          impellenti.\\
+%          Audiens \textsc{Verbum}: \& utens %
+%          \textsc{Sacramentis}.\\
+%          Patienter \& constanter sufferens %
+%          \textsc{Crucem}.\\
+%          Sperans \& expectans glorificationem\\
+%          \textsc{In Resurrectione Carnis}\\
+%          \textsc{Ad Vitam \AE{}ternam}.}
+%      }\smallskip
+%      \schema
+%      {\schemabox{seipsum ratione}}
+%      {\schemabox{Anim\ae{}\\ vel\\ Corporis}}\smallskip
+%      \Schema{0ex}{5ex}
+%      {\schemabox{Proximum,}}
+%      {%
+%        \schema
+%        {\schemabox{Amicum ra-\\ tione vel}}
+%        {%
+%          \schemabox{Religionis.\\
+%            Politic\ae{} \& \OE{}conomic\ae{}.\\
+%            Cognationis.\\
+%            Agnationis.}
+%        }\smallskip
+%        \schemabox{Inimicum.}
+%      }
+%    }
+%  }
+%}
+%\egroup\medskip
+%
+%\noindent The following lines, shown with some surrounding context, were changed as a result of adding spaces:
+%
+% \bgroup\footnotesize%
+% \begin{multicols}{2}
+%\noindent|      \schemabox{Unus in essentia.\smallskip\\%|\\
+%|        Trinus in personis.}|\\
+%|    }\smallskip|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|        \textsc{Ad Vitam \AE{}ternam}.}|\\
+%|    }\medskip|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|      \schemabox{Ante lapsum.}\smallskip|\\
+%|      \schema|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|        \schemabox{Ante Regenerationem \&\\|\\
+%|          Renovationem S. Sancti.}\medskip|\\
+%|        \schemabox{Post Regenerationem \&\\|\\
+%|          Renovationem S. Sancti.}|\\
+%|       }\smallskip|\columnbreak\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|          \textsc{Ad Vitam \AE{}ternam}.}|\\
+%|      }\smallskip|\\
+%|      \schema|\\
+%|      {\schemabox{seipsum ratione}}|\\
+%|      {\schemabox{Anim\ae{}\\ vel\\ Corporis}}%|\\
+%|         \smallskip|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|            Agnationis.}|\\
+%|        }\smallskip|\\
+%|        \schemabox{Inimicum.}|\\
+% \end{multicols}
+% \egroup%
+%
+% Next we estimate the lines from the top of a |\Schema| brace to the bottom, e.g., from ``\textsc{Per se}:'' to ``quem vel''. We use those ``ex'' height figures for \meta{size}:\\
+%
+% \bgroup\footnotesize%
+%\Schema{0ex}{20ex}
+%{%
+%  \schemabox{Subjectum \& summa\\
+%      univers\ae{} Scriptur\ae{},\\
+%      est \textsc{Cognitio} vel}
+%}
+%{%
+%  \Schema{0ex}{8ex}
+%  {%
+%    \schemabox{\textsc{Dei}, qualis \\%
+%      sit, aut}
+%  }
+%  {%
+%    \schema
+%    {\schemabox{\textsc{Per se}:\\ scilicet.}}
+%    {%
+%      \schemabox{Unus in essentia.\smallskip\\%
+%        Trinus in personis.}
+%    }\smallskip
+%    \schema
+%    {\schemabox{Ad hominem\\ quem vel}}
+%    {%
+%      \schemabox{Accusat \& terret, %
+%        \textsc{Per Legem},\\
+%        Consolatur \& erigit, %
+%        \textsc{Per Evangelium}.\\
+%        Salvat, \textsc{Per Christum}.\\
+%        Renovat, \textsc{Per Spiritum%
+%        Sanctum}.\\
+%        Sanctificat, \textsc{Per Verbum} \& %
+%        \textsc{Sacramenta}.\\
+%        Castigat, tentat \& exercet, %
+%        \textsc{Per Crucem}.\\
+%        Glorificat \textsc{Per %
+%        Resurrectionem Carnis}\\
+%        \textsc{Ad Vitam \AE{}ternam}.}
+%    }\medskip
+%  }
+%  \Schema{0ex}{14ex}
+%  {%
+%    \schemabox
+%    {%
+%      \textsc{Hominis},\\ qualis sit
+%    }
+%  }
+%  {%
+%    \Schema{0ex}{4ex}
+%    {\schemabox{\textsc{Per se}:}}
+%    {%
+%      \schemabox{Ante lapsum.}\smallskip
+%      \schema
+%      {\schemabox{Post lapsum:}}
+%      {%
+%        \schemabox{Ante Regenerationem \&\\
+%          Renovationem S. Sancti.}\medskip
+%        \schemabox{Post Regenerationem \&\\
+%          Renovationem S. Sancti.}
+%      }\smallskip
+%    }
+%    \Schema{0ex}{12ex}
+%    {\schemabox{Ad}}
+%    {%
+%      \schema
+%      {\schemabox{\textsc{Deum}}}
+%      {%
+%        \schemabox{P\oe{}nitentia agens, %
+%          agnitis peccatis \&\\
+%          ira Dei cognita \textsc{Ex Lege}.\\
+%          Erigens se \textsc{Voce Evangelii}.\\
+%          Credens \textsc{In Christum Salvatorem}.\\
+%          Non repugnans \textsc{Spiritui Sancto} %
+%          impellenti.\\
+%          Audiens \textsc{Verbum}: \& utens %
+%          \textsc{Sacramentis}.\\
+%          Patienter \& constanter sufferens %
+%          \textsc{Crucem}.\\
+%          Sperans \& expectans glorificationem\\
+%          \textsc{In Resurrectione Carnis}\\
+%          \textsc{Ad Vitam \AE{}ternam}.}
+%      }\smallskip
+%      \schema
+%      {\schemabox{seipsum ratione}}
+%      {\schemabox{Anim\ae{}\\ vel\\ Corporis}}\smallskip
+%      \Schema{0ex}{4ex}
+%      {\schemabox{Proximum,}}
+%      {%
+%        \schema
+%        {\schemabox{Amicum ra-\\ tione vel}}
+%        {%
+%          \schemabox{Religionis.\\
+%            Politic\ae{} \& \OE{}conomic\ae{}.\\
+%            Cognationis.\\
+%            Agnationis.}
+%        }\smallskip
+%        \schemabox{Inimicum.}
+%      }
+%    }
+%  }
+%}
+%\egroup\medskip
+%
+%\noindent The following lines, shown with some surrounding context, illustrate our ``ball park'' figures:
+%
+% \bgroup\footnotesize%
+% \begin{multicols}{2}
+%\noindent|\Schema{0ex}{20ex}|\\
+%|{%|\\
+%|  \schemabox{Subjectum \& summa\\|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|  \Schema{0ex}{8ex}|\\
+%|  {%|\\
+%|    \schemabox{\textsc{Dei}, qualis \\%|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|  \Schema{0ex}{14ex}|\\
+%|  {%|\\
+%|    \schemabox|\\
+%|    {%|\\
+%|      \textsc{Hominis},\\ qualis sit|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|    \Schema{0ex}{4ex}|\\
+%|    {\schemabox{\textsc{Per se}:}}|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|    \Schema{0ex}{12ex}|\\
+%|    {\schemabox{Ad}}|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|      \Schema{0ex}{4ex}|\\
+%|      {\schemabox{Proximum,}}|\\
+% \end{multicols}
+% \egroup%
+%
+% Now we add the \meta{adjust values} by counting the lines in the direction the brace needs to move, multiplying by two, and making it negative for up and positive for down. Using, e.g., \textsf{texworks} makes this easy. Work from leaves to root.\\
+%
+% \bgroup\footnotesize%
+%\Schema{-25ex}{20ex}
+%{%
+%  \schemabox{Subjectum \& summa\\
+%      univers\ae{} Scriptur\ae{},\\
+%      est \textsc{Cognitio} vel}
+%}
+%{%
+%  \Schema{-6.4ex}{8.2ex}
+%  {%
+%    \schemabox{\textsc{Dei}, qualis \\%
+%      sit, aut}
+%  }
+%  {%
+%    \schema
+%    {\schemabox{\textsc{Per se}:\\ scilicet.}}
+%    {%
+%      \schemabox{Unus in essentia.\smallskip\\%
+%        Trinus in personis.}
+%    }\smallskip
+%    \schema
+%    {\schemabox{Ad hominem\\ quem vel}}
+%    {%
+%      \schemabox{Accusat \& terret, %
+%        \textsc{Per Legem},\\
+%        Consolatur \& erigit, %
+%        \textsc{Per Evangelium}.\\
+%        Salvat, \textsc{Per Christum}.\\
+%        Renovat, \textsc{Per Spiritum%
+%        Sanctum}.\\
+%        Sanctificat, \textsc{Per Verbum} \& %
+%        \textsc{Sacramenta}.\\
+%        Castigat, tentat \& exercet, %
+%        \textsc{Per Crucem}.\\
+%        Glorificat \textsc{Per %
+%        Resurrectionem Carnis}\\
+%        \textsc{Ad Vitam \AE{}ternam}.}
+%    }\medskip
+%  }
+%  \Schema{-14.4ex}{17ex}
+%  {%
+%    \schemabox
+%    {%
+%      \textsc{Hominis},\\ qualis sit
+%    }
+%  }
+%  {%
+%    \Schema{-4ex}{4.4ex}
+%    {\schemabox{\textsc{Per se}:}}
+%    {%
+%      \schemabox{Ante lapsum.}\smallskip
+%      \schema
+%      {\schemabox{Post lapsum:}}
+%      {%
+%        \schemabox{Ante Regenerationem \&\\
+%          Renovationem S. Sancti.}\medskip
+%        \schemabox{Post Regenerationem \&\\
+%          Renovationem S. Sancti.}
+%      }\smallskip
+%    }
+%    \Schema{3.6ex}{14ex}
+%    {\schemabox{Ad}}
+%    {%
+%      \schema
+%      {\schemabox{\textsc{Deum}}}
+%      {%
+%        \schemabox{P\oe{}nitentia agens, %
+%          agnitis peccatis \&\\
+%          ira Dei cognita \textsc{Ex Lege}.\\
+%          Erigens se \textsc{Voce Evangelii}.\\
+%          Credens \textsc{In Christum Salvatorem}.\\
+%          Non repugnans \textsc{Spiritui Sancto} %
+%          impellenti.\\
+%          Audiens \textsc{Verbum}: \& utens %
+%          \textsc{Sacramentis}.\\
+%          Patienter \& constanter sufferens %
+%          \textsc{Crucem}.\\
+%          Sperans \& expectans glorificationem\\
+%          \textsc{In Resurrectione Carnis}\\
+%          \textsc{Ad Vitam \AE{}ternam}.}
+%      }\smallskip
+%      \schema
+%      {\schemabox{seipsum ratione}}
+%      {\schemabox{Anim\ae{}\\ vel\\ Corporis}}\smallskip
+%      \Schema{2ex}{5ex}
+%      {\schemabox{Proximum,}}
+%      {%
+%        \schema
+%        {\schemabox{Amicum ra-\\ tione vel}}
+%        {%
+%          \schemabox{Religionis.\\
+%            Politic\ae{} \& \OE{}conomic\ae{}.\\
+%            Cognationis.\\
+%            Agnationis.}
+%        }\smallskip
+%        \schemabox{Inimicum.}
+%      }
+%    }
+%  }
+%}
+%\egroup\medskip
+%
+%\noindent The following illustrates the final results:
+%
+% \bgroup\footnotesize%
+% \begin{multicols}{2}
+%\noindent|\Schema{-25ex}{20ex}|\\
+%|{%|\\
+%|  \schemabox{Subjectum \& summa\\|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|  \Schema{-6.4ex}{8.2ex}|\\
+%|  {%|\\
+%|    \schemabox{\textsc{Dei}, qualis \\%|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|  \Schema{-14.4ex}{17ex}|\\
+%|  {%|\\
+%|    \schemabox|\\
+%|    {%|\\
+%|      \textsc{Hominis},\\ qualis sit|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|    \Schema{-4ex}{4.4ex}|\\
+%|    {\schemabox{\textsc{Per se}:}}|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|    \Schema{3.6ex}{14ex}|\\
+%|    {\schemabox{Ad}}|\\
+% \hbox to 0.25\columnwidth{\bfseries\hfil\dots}\\
+%\noindent|      \Schema{2ex}{5ex}|\\
+%|      {\schemabox{Proximum,}}|\\
+% \end{multicols}
+% \egroup
+%
+% \noindent The next example illustrates spacing, adjusting, and |\DoParens|:\\
+%
+% \bgroup\scriptsize\DoParens%
+%\Schema{-38ex}{14ex}
+%{
+%  \schemabox{Sacr\ae{} litter\ae{}\\ loquuntur, de}
+%}
+%{
+%  \schema
+%  {
+%    \schemabox{\textsc{Deo}}
+%  }
+%  {
+%    \schemabox{Uno, in Trinitate.\smallskip\\Trino, in unitate.}
+%  }
+%  \Schema{-21ex}{19.6ex}
+%  {
+%    \schemabox{\textsc{Dei}\\ \textsc{Operibus}}
+%  }
+%  {
+%    \schema
+%    {
+%      \schemabox{\textsc{Intra}, qu\ae{} sunt\\ divisa, ut}
+%    }
+%    {
+%      \schemabox{\textsc{Patris}, ab \ae{}terno gignere.\\ \textsc{Filii}, ab \ae{}terno genitum esse.\\ \textsc{Spiritus Sancti}, ab utroque\\ ab \ae{}terno procedete.}
+%    }
+%    \medskip
+%    \Schema{-2.6ex}{19.6ex}
+%    {
+%      \schemabox{\textsc{Extra}, qu\ae{} sunt\\ indivisa; tervata\\ tamen cujusque\\ person\ae{} divinita-\\ tis sua proprietate}
+%    }
+%    {
+%      \Schema{-0.8ex}{6.4ex}
+%      {
+%        \schemabox{Creatione\\ natur\ae{}}
+%      }
+%      {
+%        \schema
+%        {
+%          \schemabox{Brute ut}
+%        }
+%        {
+%          \schemabox{C\oe{}li} \smallskip \schemabox{Elementorum} \smallskip \schemabox{Mundi}
+%        }
+%        \smallskip
+%        \schema
+%        {
+%          \schemabox{\gk{logik~hs}, ut}
+%        }
+%        {
+%          \schemabox{Angelorum.} \smallskip \schemabox{Hominum: Ad\ae{},\\ Ev\ae{} \& procreatorum\\ exipsis.}
+%        }
+%      }
+%      \schema
+%      {
+%        \schemabox{Sustenatione\\ natur\ae{} laps\ae{},}
+%      }
+%      {
+%        \schemabox{Angelorum malorum,} \smallskip \schemabox{Hominum: Ad\ae{}, Ev\ae{}\\ \& procreatorum exipsis.}
+%      }
+%      \Schema{2.6ex}{8.6ex}
+%      {
+%        \schemabox{Beneficiis erga\\ Ecclesiam: ea ver-\\ santur aut circa}
+%      }
+%      {
+%        \Schema{2.2ex}{7ex}
+%        {
+%          \schemabox{Res, ut}
+%        }
+%        {
+%          \schema
+%          {
+%            \schemabox{Verbum}
+%          }
+%          {
+%            \schemabox{Legis} \smallskip \schemabox{Evangelii} \smallskip \schemabox{Sacramentorum}
+%          }
+%          \smallskip
+%          \schema
+%          {
+%            \schemabox{Signa vel Veteris\\ vel Novi Testa-\\ mentum ut sunt:}
+%          }
+%          {
+%            \schemabox{Ceremoni\ae{}} \smallskip \schemabox{Miracula}
+%          }
+%        }
+%        \smallskip
+%        \Schema{1ex}{5ex}
+%        {
+%          \schemabox{Personas}
+%        }
+%        {
+%          \schema
+%          {
+%            \schemabox{Ecclesi\ae{}}
+%          }
+%          {
+%            \schemabox{Universalis} \smallskip \schemabox{Particularis}
+%          }
+%          \smallskip
+%          \schemabox{Politi\ae{} ut Magistratuum}
+%          \smallskip
+%          \schemabox{\OE{}conomi\ae{} ut privatorum}
+%        }
+%      }
+%    }
+%  }
+%}
+%\egroup\medskip
+%
+% \noindent Next we see some closed schemata. Braces are back, thanks to scoping rules.\\
+%
+%\bgroup\small%
+%\Schema{-1.4ex}{10ex}
+%{%
+%  \schemabox{Qu\ae{} sit\\ %
+%    \textsc{Dei}, vel}
+%}
+%{%
+%  \Schema{-1ex}{5ex}
+%  {%
+%    \schemabox{\textsc{Essentia}, in}
+%  }
+%  {%
+%    \vskip1ex\schemabox{Unitate divina,}
+%    \medskip
+%    \Schema{0ex}{3.4ex}
+%    {%
+%      \schemabox{Tribus perso-\\%
+%        nis divinitatis}
+%    }
+%    {%
+%      \Schema[close]{0ex}{3.4ex}
+%      {%
+%        \schemabox{Patre,\\ Filio,\\%
+%          Spiritui Sancto}
+%      }
+%      {%
+%        \schemabox{\gk{<omoous'iois}\\%
+%          \& co\ae{}ternis}
+%      }
+%    }
+%  }
+%  \medskip
+%  \Schema{-0.2ex}{6.4ex}
+%  {%
+%    \schemabox{\textsc{Voluntas},\\%
+%      revelatur in\\ actione, sive}
+%  }
+%  {%
+%    \Schema{0ex}{3.4ex}
+%    {%
+%      \schemabox{Universali}
+%    }
+%    {%
+%      \Schema[close]{0ex}{3.4ex}
+%      {%
+%        \schemabox{Creationis,\\%
+%          Sustenationis,\\ Propagationis,}
+%      }
+%      {%
+%        \schemabox{rerum creatarum.}
+%      }
+%    }
+%    \medskip
+%    \schema
+%    {%
+%      \schemabox{Speciali, in beneficiis\\%
+%        erga Ecclesiam, eam}
+%    }
+%    {%
+%      \schemabox{Colligendo.\\ Justificando.\\%
+%        Conservando.\\ Glorificando.}
+%    }
+%  }
+%}\egroup\medskip
+%
+% \noindent This example merits consideration because it uses not only open schemata but closed ones nested within them. One must use |\Schema| in that case to prevent the opening braces from being slightly larger than the closing braces.
+%
+% \bgroup\footnotesize%
+% \begin{multicols}{2}
+%\noindent|\Schema{-1.4ex}{10ex}|\\
+%|{%|\\
+%|  \schemabox{Qu\ae{} sit\\%|\\
+%|    \textsc{Dei}, vel}|\\
+%|}|\\
+%|{%|\\
+%|  \Schema{-1ex}{5ex}|\\
+%|  {%|\\
+%|    \schemabox{\textsc{Essentia}, in}|\\
+%|  }|\\
+%|  {%|\\
+%|    \vskip1ex\schemabox{Unitate divina,}|\\
+%|    \medskip|\\
+%|    \Schema{0ex}{3.4ex}|\\
+%|    {%|\\
+%|      \schemabox{Tribus perso-\\%|\\
+%|        nis divinitatis}|\\
+%|    }|\\
+%|    {%|\\
+%|      \Schema[close]{0ex}{3.4ex}|\\
+%|      {%|\\
+%|        \schemabox{Patre,\\ Filio,\\%|\\
+%|          Spiritui Sancto}|\\
+%|      }|\\
+%|      {%|\\
+%|        \schemabox{\gk{<omoous'iois}\\%|\\
+%|          \& co\ae{}ternis}|\\
+%|      }|\\
+%|    }|\\
+%|  }|\\
+%|  \medskip|\columnbreak\\
+%|  \Schema{-0.2ex}{6.4ex}|\\
+%|  {%|\\
+%|    \schemabox{\textsc{Voluntas},\\%|\\
+%|      revelatur in\\ actione, sive}|\\
+%|  }|\\
+%|  {%|\\
+%|    \Schema{0ex}{3.4ex}|\\
+%|    {%|\\
+%|      \schemabox{Universali}|\\
+%|    }|\\
+%|    {%|\\
+%|      \Schema[close]{0ex}{3.4ex}|\\
+%|      {%|\\
+%|        \schemabox{Creationis,\\%|\\
+%|          Sustenationis,\\ Propagationis,}|\\
+%|      }|\\
+%|      {%|\\
+%|        \schemabox{rerum creatarum.}|\\
+%|      }|\\
+%|    }|\\
+%|    \medskip|\\
+%|    \schema|\\
+%|    {%|\\
+%|      \schemabox{Speciali, in beneficiis\\%|\\
+%|        erga Ecclesiam, eam}|\\
+%|    }|\\
+%|    {%|\\
+%|      \schemabox{Colligendo.\\ Justificando.\\%|\\
+%|        Conservando.\\ Glorificando.}|\\
+%|    }|\\
+%|  }|\\
+%|}|\\
+% \end{multicols}
+% \egroup
+% \noindent Balanced open/closed schemata take the general form:\\[1ex]
+% |\Schema{0ex}{2ex}|\\
+% |       {\hbox{$left_1$}}{\Schema[close]{0ex}{2ex}|\\
+% |                        {\hbox{$left_2$}}{\hbox{$right_2$}}}|\\[1ex]
+% \noindent The result is:
+% \begin{displaymath}
+% \Schema{0ex}{2ex}
+%        {\hbox{$left_1$}}{\Schema[close]{0ex}{2ex}
+%                         {\hbox{$left_2$}}{\hbox{$right_2$}}}
+% \end{displaymath}\medskip
+%
+% \noindent Try to produce the following. Hint: Everything to the right of the leftmost brace is the RHS of the outermost schema. Everything in that RHS to the left of the rightmost brace is the LHS of the first nested schema, and so on.
+% \bgroup\DoBrackets%
+% \begin{displaymath}
+% \Schema{-0.2ex}{5.5ex}
+% {\schemabox{a}}%
+% {%
+%   \Schema[close]{-0.2ex}{5.5ex}
+%   {%
+%     \Schema{0ex}{3ex}
+%     {\schemabox{b\\c}}%
+%     {%
+%       \Schema[close]{0ex}{3ex}
+%       {\schemabox{f\\g\\h}}%
+%       {\schemabox{l\\m}}%
+%     }
+%     \Schema{0ex}{3ex}
+%     {\schemabox{d\\e}}%
+%     {%
+%       \Schema[close]{0ex}{3ex}
+%       {\schemabox{i\\j\\k}}%
+%       {\schemabox{n\\o}}%
+%     }%
+%   }%
+%   {\schemabox{p}}%
+% }
+% \end{displaymath}
+% \egroup
+% \clearpage
+% This final example illustrates how one can set the width of a |\schemabox|, and for what sort of use that might be, e.g., in order to line up the braces. Invoking |\DoBrackets| after the start of the group containing the right-hand side of the first |\Schema| causes all schemas contained therein to use brackets. This remains consistent with scoping rules.\\[2ex]
+%\Schema{-0.2ex}{14.4ex}
+%{\schemabox{\bfseries Curriculum}}
+%{%
+%  \DoBrackets%
+%  \schema
+%    {\schemabox[3cm]{\bfseries I. General\\Studies}}
+%    {\schemabox{1. Collected Works\\2. Encyclopedias}}
+%  \smallskip
+%  \schema
+%    {\schemabox[3cm]{\bfseries II. Literary\\Disciplines}}
+%    {\schemabox{1. Philology\\
+%      2. Historical Introduction\\
+%      3. Literary Theory\\
+%      4. Application}}
+%  \smallskip
+%  \schema
+%      {\schemabox[3cm]{\bfseries III. Philosophical\\Disciplines}}
+%      {\schemabox{1. Source Texts\\
+%      2. History of Philosophy\\
+%      3. General Surveys\\
+%      4. Specific Studies}}
+%  \smallskip
+%  \schema
+%      {\schemabox[3cm]{\bfseries IV. Historical\\Disciplines}}
+%      {\schemabox{1. General Surveys\\
+%      2. Specialized Works}}
+%}
+% \begin{multicols}{2}
+% \bgroup\footnotesize
+%\noindent|\Schema{-0.2ex}{14.4ex}|\\
+%|{\schemabox{\bfseries Curriculum}}|\\
+%|{%|\\
+%|  \DoBrackets%|\\
+%|  \schema|\\
+%|    {\schemabox[3cm]{\bfseries%|\\
+%|      I. General\\Studies}}|\\
+%|    {\schemabox{1. Collected Works\\|\\
+%|      2. Encyclopedias}}|\\
+%|  \smallskip|\\
+%|  \schema|\\
+%|    {\schemabox[3cm]{\bfseries%|\\
+%|      II. Literary\\Disciplines}}|\\
+%|    {\schemabox{1. Philology\\|\\
+%|      2. Historical Introduction\\|\\
+%|      3. Literary Theory\\|\\
+%|      4. Application}}|\\
+%|  \smallskip|\\
+%|  \schema|\\
+%|      {\schemabox[3cm]{\bfseries%|\\
+%|      III. Philosophical\\Disciplines}}|\\
+%|      {\schemabox{1. Source Texts\\|\\
+%|      2. History of Philosophy\\|\\
+%|      3. General Surveys\\|\\
+%|      4. Specific Studies}}|\\
+%|  \smallskip|\\
+%|  \schema|\\
+%|      {\schemabox[3cm]{\bfseries%|\\
+%|      IV. Historical\\Disciplines}}|\\
+%|      {\schemabox{1. General Surveys\\|\\
+%|      2. Specialized Works}}|\\
+%|}|\\
+% \egroup
+% \end{multicols}\bigskip
+% \noindent Feedback is always welcome!
+% \clearpage
+% \StopEventually{\PrintChanges\clearpage\PrintIndex}
+%
+% \iffalse
+%<*package>
+% \fi
+% \section{Implementation}
+%
+% The concept of using math mode to generate schemata was first implemented by me in plain \TeX, then migrated to \LaTeX.
+%
+% \subsection{Package Options and Required Packages}
+%
+% \changes{v0.6}{2013/03/10}{Added brackets and parens as well as braces}
+% Three options are implemented, namely, |braces| (the default), |brackets|, and |parens|. Plain \TeX{} does not use options as such, but simply declares braces as the default and allows the user to change that after the file is |\input|.\\
+%    \begin{macrocode}
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+\def\DoBraces{\let\schemaLD\lbrace \let\schemaRD\rbrace}\DoBraces%
+\DoBraces%
+\else
+\DeclareOption{braces}{\let\schemaLD\lbrace \let\schemaRD\rbrace}
+\DeclareOption{brackets}{\let\schemaLD\lbrack \let\schemaRD\rbrack}
+\DeclareOption{parens}{\let\schemaLD( \let\schemaRD)}
+\ExecuteOptions{braces}
+\ProcessOptions\relax
+\fi
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\newbox\rhs%
+\newbox\lhs%
+\newdimen\rheight%
+\newdimen\lheight%
+%    \end{macrocode}\medskip
+%Two box registers and two dimen registers are used to analyze the left-hand and right-hand vertical sizes of the boxes in a schema. Automation of alignment presently is a distant horizon.
+%
+% \changes{v0.6}{2013/03/10}{Added tweaks for lowercase material in a \cmd{\schema}.}
+%    \begin{macrocode}
+\newif\ifschemaLC%
+\newif\ifschemaSwitch%
+%    \end{macrocode}
+%
+% \subsection {Macros}
+%
+% \begin{macro}{\DoBraces}
+% \changes{v0.6}{2013/03/10}{Added macro}
+%    \begin{macrocode}
+\def\DoBraces{\let\schemaLD\lbrace \let\schemaRD\rbrace}\DoBraces%
+%    \end{macrocode}
+% \end{macro}
+% Set the default option.
+% \begin{macro}{\DoBrackets}
+% \changes{v0.6}{2013/03/10}{Added macro}
+%    \begin{macrocode}
+\def\DoBrackets{\let\schemaLD\lbrack \let\schemaRD\rbrack}%
+%    \end{macrocode}
+% \end{macro}
+% Set the ``branches'' to be brackets.
+% \begin{macro}{\DoParens}
+% \changes{v0.6}{2013/03/10}{Added macro}
+%    \begin{macrocode}
+\def\DoParens{\let\schemaLD( \let\schemaRD)}%
+%    \end{macrocode}
+% \end{macro}
+% Set the ``branches'' to be parentheses.
+% \begin{macro}{\LCschema}
+% \changes{v0.6}{2013/03/10}{Added macro}
+%    \begin{macrocode}
+\def\LCschema{\schemaLCtrue}%
+%    \end{macrocode}
+% \end{macro}
+% Set global settings to assume lowercase initial text in schemaboxes.
+% \begin{macro}{\UCschema}
+% \changes{v0.6}{2013/03/10}{Added macro}
+%    \begin{macrocode}
+\def\UCschema{\schemaLCfalse}%
+%    \end{macrocode}
+% \end{macro}
+% Set global settings to assume uppercase initial text in schemaboxes.
+% \begin{macro}{\SwitchSB}
+% \changes{v0.6}{2013/03/10}{Added macro}
+%    \begin{macrocode}
+\def\SwitchSB{\schemaSwitchtrue}%
+%    \end{macrocode}
+% \end{macro}
+% Flip the settings for one |\schemabox|, which will reset this value.
+%
+% \begin{macro}{\schemabox}
+% \changes{v0.6}{2013/03/10}{Added lowercase tweaks}
+%    \begin{macrocode}
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+{\catcode`@=11
+\gdef\schemabox{\futurelet\testchar\schemab@x}
+\gdef\schemab@x{\ifx[\testchar \let\next\@schemabox%
+  \else \let\next\@schemab@x \fi \next}
+\gdef\@schemab@x#1{\@schemabox[0pt]{#1}}
+\gdef\@schemabox[#1]#2{%
+  \ifschemaLC\def\Adj{}%
+    \ifschemaSwitch\def\Adj{\strut}\fi
+  \else
+    \def\Adj{\strut}%
+    \ifschemaSwitch\def\Adj{}\fi
+  \fi
+  \schemaSwitchfalse%
+  \ifdim#1<1pt
+    \def\\{\egroup\hbox\bgroup\ignorespaces }%
+    \vbox{\hbox\bgroup\Adj\ignorespaces #2\egroup}%
+  \else
+    \def\\{\hfil\egroup\hbox to #1\bgroup\ignorespaces }%
+    \vbox{\hbox to #1\bgroup\Adj\ignorespaces #2\hfil\egroup}%
+  \fi
+}}\else
+\newcommand{\schemabox}[2][0pt]{%
+  \ifschemaLC\def\Adj{}%
+    \ifschemaSwitch\def\Adj{\strut}\fi
+  \else
+    \def\Adj{\strut}%
+    \ifschemaSwitch\def\Adj{}\fi
+  \fi
+  \schemaSwitchfalse%
+  \ifdim#1<1pt
+    \def\\{\egroup\hbox\bgroup\ignorespaces }%
+    \vbox{\hbox\bgroup\Adj\ignorespaces #2\egroup}%
+  \else
+    \def\\{\hfil\egroup\hbox to #1\bgroup\ignorespaces }%
+    \vbox{\hbox to #1\bgroup\Adj\ignorespaces #2\hfil\egroup}%
+  \fi
+}\fi
+%    \end{macrocode}
+% \end{macro}
+% Wrap a stack of left-aligned hboxes with optional width in a vbox.
+% This allows the box to be only as wide as needed. The syntax is reminiscent
+% of a one-column tabular. Normally insert a |\strut| in the first |\hbox|.
+%
+% \begin{macro}{\schema}
+%    \begin{macrocode}
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+{\catcode`@=11
+\gdef\schema{\futurelet\testchar\schem@}
+\gdef\schem@{\ifx[\testchar \let\next\@schema%
+  \else \let\next\@schem@ \fi \next}
+\gdef\@schem@#1#2{\@schema[open]{#1}{#2}}
+\gdef\@schema[#1]#2#3{%
+  \def\Option{#1}\def\Open{open}%
+  \ifx\Option\Open
+    \setbox\rhs=\vbox{#3}%
+    \rheight=\ht\rhs%
+    \advance\rheight\dp\rhs%
+    \advance\rheight by 1.44265ex%
+    \hbox{$\vcenter{#2}\basiclbrace{\rheight}\vcenter{#3}$}%
+  \else
+    \setbox\lhs=\vbox{#2}%
+    \lheight=\ht\lhs%
+    \advance\lheight\dp\lhs%
+    \advance\lheight by 1.44265ex%
+    \hbox{$\vcenter{#2}\kern-0.2em\basicrbrace{\lheight}\vcenter{#3}$}%
+  \fi
+}}\else
+\newcommand{\schema}[3][open]{%
+  \def\Option{#1}\def\Open{open}%
+  \ifx\Option\Open
+    \setbox\rhs=\vbox{#3}%
+    \rheight=\ht\rhs%
+    \advance\rheight\dp\rhs%
+    \advance\rheight by 1.44265ex%
+    \hbox{$\vcenter{#2}\basiclbrace{\rheight}\vcenter{#3}$}%
+  \else
+    \setbox\lhs=\vbox{#2}%
+    \lheight=\ht\lhs%
+    \advance\lheight\dp\lhs%
+    \advance\lheight by 1.44265ex%
+    \hbox{$\vcenter{#2}\kern-0.2em\basicrbrace{\lheight}\vcenter{#3}$}%
+  \fi
+}\fi
+%    \end{macrocode}
+% \end{macro}
+% This ``simple'' schema vertically centers two boxes of internal vertical material and
+% puts a ``simple'' brace between the boxes based on the height of the box and the options
+% passed to the schema. By default, a schema has a box to the left, an open delimiter,
+% and a box to the right. If any optional argument other than "open" is used, the schema
+% prints a box to the left, a close brace, and a box to the right.
+%
+% \begin{macro}{\Schema}
+%    \begin{macrocode}
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+{\catcode`@=11
+\gdef\Schema{\futurelet\testchar\Schem@}
+\gdef\Schem@{\ifx[\testchar \let\next\@Schema \else \let\next\@Schem@ \fi \next}
+\gdef\@Schem@#1#2#3#4{\@Schema[open]{#1}{#2}{#3}{#4}}
+\gdef\@Schema[#1]#2#3#4#5{%
+  \def\Option{#1}\def\Open{open}%
+  \ifx\Option\Open
+    \dimen0=#2%
+    \hbox{$\vcenter{\vskip1.44265\dimen0#4}\complexlbrace{#2}{#3}\vcenter{#5}$}%
+  \else
+    \dimen0=#2%
+    \hbox{$\vcenter{\vskip1.44265\dimen0#4}\kern-0.2em%
+      \complexrbrace{#2}{#3}\vcenter{#5}$}%
+  \fi
+}}\else
+\newcommand{\Schema}[5][open]{%
+  \def\Option{#1}\def\Open{open}%
+  \ifx\Option\Open
+    \dimen0=#2%
+    \hbox{$\vcenter{\vskip1.44265\dimen0#4}\complexlbrace{#2}{#3}\vcenter{#5}$}%
+  \else
+    \dimen0=#2%
+    \hbox{$\vcenter{\vskip1.44265\dimen0#4}\kern-0.2em%
+      \complexrbrace{#2}{#3}\vcenter{#5}$}%
+  \fi
+}\fi
+%    \end{macrocode}
+% \end{macro}
+% This is the general-purpose form of schemata. The parameters include whether it is an open or closed schema, the vertical adjustment of the left-hand side, the size of the brace, and the contents of the left and right-hand sizes. It works the same as above, but requires manual adjustment of the braces.
+%
+% \begin{macro}{\basiclbrace}
+%    \begin{macrocode}
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+  \def\basiclbrace#1{%
+    \ifmmode\left.\vcenter{\vbox to #1{\vfil}}\right\schemaLD\fi}
+\else
+  \newcommand{\basiclbrace}[1]{%
+    \ifmmode\left.\vcenter{\vbox to #1{\vfil}}\right\schemaLD\fi}
+\fi
+%    \end{macrocode}
+% \end{macro}
+% Draw an on-center brace to the left of a simple box.
+%
+% \begin{macro}{\basicrbrace}
+%    \begin{macrocode}
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+  \def\basicrbrace#1{%
+    \ifmmode\left\schemaRD\vcenter{\vbox to #1{\vfil}}\right.\fi}
+\else
+  \newcommand{\basicrbrace}[1]{%
+    \ifmmode\left\schemaRD\vcenter{\vbox to #1{\vfil}}\right.\fi}
+\fi
+%    \end{macrocode}
+% \end{macro}
+% Draw an on-center brace to the right of a simple box.
+%
+% \begin{macro}{\complexlbrace}
+%    \begin{macrocode}
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+\def\complexlbrace#1#2{%
+  \dimen0=#1%
+  \dimen2=#2%
+  \ifdim\dimen0<0pt
+    \ifmmode\vcenter{\hbox{$\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaLD%
+      \atop\vbox to -1.44265\dimen0{\vfil}$}}\fi
+  \else
+    \ifmmode\vcenter{\hbox{$\vbox to 1.44265\dimen0{\vfil}%
+      \atop\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaLD$}}\fi
+  \fi
+}\else
+\newcommand{\complexlbrace}[2]{%
+  \dimen0=#1%
+  \dimen2=#2%
+  \ifdim\dimen0<0pt
+    \ifmmode\vcenter{\hbox{$\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaLD%
+      \atop\vbox to -1.44265\dimen0{\vfil}$}}\fi
+  \else
+    \ifmmode\vcenter{\hbox{$\vbox to 1.44265\dimen0{\vfil}%
+      \atop\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaLD$}}\fi
+  \fi
+}\fi
+%    \end{macrocode}
+% \end{macro}
+% Draw a brace to the left of a complex assortment of boxes.
+%
+% \begin{macro}{\complexrbrace}
+%    \begin{macrocode}
+\expandafter\ifx\csname newenvironment\endcsname\relax%
+\def\complexrbrace#1#2{%
+  \dimen0=#1%
+  \dimen2=#2%
+  \ifdim\dimen0<0pt
+    \ifmmode\vcenter{\hbox{$\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaRD%
+      \atop\vbox to -1.44265\dimen0{\vfil}$}}\fi
+  \else
+    \ifmmode\vcenter{\hbox{$\vbox to 1.44265\dimen0{\vfil}%
+      \atop\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaRD$}}\fi
+  \fi
+}\else
+\newcommand{\complexrbrace}[2]{%
+  \dimen0=#1%
+  \dimen2=#2%
+  \ifdim\dimen0<0pt
+    \ifmmode\vcenter{\hbox{$\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaRD%
+      \atop\vbox to -1.44265\dimen0{\vfil}$}}\fi
+  \else
+    \ifmmode\vcenter{\hbox{$\vbox to 1.44265\dimen0{\vfil}%
+      \atop\left.\vbox to 1.44265\dimen2{\vfil}\right\schemaRD$}}\fi
+  \fi
+}\fi
+%    \end{macrocode}
+% \end{macro}
+% Draw a brace to the right of a complex assortment of boxes.
+% 
+% \clearpage
+% \Finale
+\endinput
+% \iffalse
+%</package>
+% \fi
